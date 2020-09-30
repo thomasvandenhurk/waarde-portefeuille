@@ -129,6 +129,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Project
+# portefeuille data
 /data/*.xls
 /data/*.xlsx
+/data/*.csv
