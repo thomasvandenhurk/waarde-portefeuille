@@ -6,6 +6,14 @@ import pandas as pd
 
 
 def read_portefeuille(path_to_data_dir='data', suffix='.csv'):
+    """
+    List all file names in path_to_data_dir with a certain suffix.
+
+    :param path_to_data_dir: path to data folder.
+    :param suffix: suffix in which file names must end.
+    :return portefeuille: overview of portefeuille combined.
+    """
+
     # obtain all filesnames
     filenames = list_filenames(path_to_data_dir, suffix)
 
@@ -21,6 +29,7 @@ def read_portefeuille(path_to_data_dir='data', suffix='.csv'):
 
     # merge all files
     portefeuille = reduce(lambda x, y: pd.merge(x, y, on=['Product', 'Symbool/ISIN'], how='outer'), portefeuille)
+    return portefeuille
 
 
 def list_filenames(path_to_data_dir, suffix):
