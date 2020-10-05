@@ -130,6 +130,7 @@ dmypy.json
 .pyre/
 
 # portefeuille data
-/data/*.xls
-/data/*.xlsx
-/data/*.csv
+/data/exports/*.xls
+/data/exports/*.xlsx
+/data/exports/*.csv
+/data/deposits/deposits.xlsx
