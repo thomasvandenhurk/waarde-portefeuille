@@ -5,23 +5,35 @@ from os import listdir
 import pandas as pd
 
 
-def read_portefeuille(path_to_data_dir='data', suffix='.csv'):
+def read_deposits():
     """
-    List all file names in path_to_data_dir with a certain suffix.
+    Read deposit file in folder data/deposits.
 
-    :param path_to_data_dir: path to data folder.
+    :return overview of deposits over time.
+    """
+
+    deposits = pd.read_csv(os.path.join('data', 'deposits', 'deposits.csv'), sep=None)
+    deposits['Datum'] = pd.to_datetime(deposits['Datum'], format='%d-%m-%Y')
+    return deposits
+
+
+def read_portefeuille(path_to_portefeuille_dir=os.path.join('data', 'exports'), suffix='.csv'):
+    """
+    List all file names in path_to_portefeuille_dir with a certain suffix.
+
+    :param path_to_portefeuille_dir: path to data folder.
     :param suffix: suffix in which file names must end.
     :return portefeuille: overview of portefeuille combined.
     """
 
     # obtain all filesnames
-    filenames = list_filenames(path_to_data_dir, suffix)
+    filenames = list_filenames(path_to_portefeuille_dir, suffix)
 
     # read and prep files
     portefeuille = []
     for file in filenames:
         date = file.replace('.csv', '')
-        data_month = pd.read_csv(os.path.join(path_to_data_dir, file))
+        data_month = pd.read_csv(os.path.join(path_to_portefeuille_dir, file))
         data_month.drop(columns=['Slotkoers', 'Lokale waarde'], axis=1, inplace=True)
         data_month['Waarde in EUR'] = pd.to_numeric(data_month['Waarde in EUR'].str.replace(',', '.'))
         data_month = data_month.rename(columns={'Aantal': date + ' (aantal)', 'Waarde in EUR': date + ' (waarde)'})
@@ -32,14 +44,14 @@ def read_portefeuille(path_to_data_dir='data', suffix='.csv'):
     return portefeuille
 
 
-def list_filenames(path_to_data_dir, suffix):
+def list_filenames(path_to_portefeuille_dir, suffix):
     """
     List all file names in path_to_data_dir with a certain suffix.
 
-    :param path_to_data_dir: path to data folder.
+    :param path_to_portefeuille_dir: path to data folder.
     :param suffix: suffix in which file names must end.
     :return: all file names existing in path_to_data_dir with suffix
     """
 
-    filenames = listdir(path_to_data_dir)
+    filenames = listdir(path_to_portefeuille_dir)
     return [filename for filename in filenames if filename.endswith(suffix)]

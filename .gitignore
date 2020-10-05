@@ -133,4 +133,4 @@ dmypy.json
 /data/exports/*.xls
 /data/exports/*.xlsx
 /data/exports/*.csv
-/data/deposits/deposits.xlsx
+/data/deposits/deposits.csv
