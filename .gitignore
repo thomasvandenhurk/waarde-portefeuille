@@ -128,3 +128,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# portefeuille data
+/data/*.xls
+/data/*.xlsx
+/data/*.csv
