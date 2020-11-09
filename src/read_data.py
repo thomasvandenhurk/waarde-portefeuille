@@ -19,7 +19,7 @@ def read_deposits():
 
 def read_portefeuille(path_to_portefeuille_dir=os.path.join('data', 'exports'), suffix='.csv'):
     """
-    List all file names in path_to_portefeuille_dir with a certain suffix.
+    Create a list of dataframes with portefeuille holdings.
 
     :param path_to_portefeuille_dir: path to data folder.
     :param suffix: suffix in which file names must end.
