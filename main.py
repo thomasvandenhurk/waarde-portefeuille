@@ -1,9 +1,8 @@
-from src.read_data import read_portefeuille, read_deposits
+from src.construct_portefeuille import construct_portefeuille
 
 
 def main():
-    read_portefeuille()
-    read_deposits()
+    construct_portefeuille()
 
 
 if __name__ == '__main__':
