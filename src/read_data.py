@@ -12,7 +12,7 @@ def read_deposits():
     :return overview of deposits over time.
     """
 
-    deposits = pd.read_csv(os.path.join('data', 'deposits', 'deposits.csv'), sep=None)
+    deposits = pd.read_csv(os.path.join('data', 'deposits', 'deposits.csv'), sep=';')
     deposits['Datum'] = pd.to_datetime(deposits['Datum'], format='%d-%m-%Y')
     return deposits
 
@@ -39,8 +39,11 @@ def read_portefeuille(path_to_portefeuille_dir=os.path.join('data', 'exports'), 
         data_month = data_month.rename(columns={'Aantal': date + ' (aantal)', 'Waarde in EUR': date + ' (waarde)'})
         portefeuille.append(data_month)
 
-    # merge all files
+    # merge all files and set nan to zero
     portefeuille = reduce(lambda x, y: pd.merge(x, y, on=['Product', 'Symbool/ISIN'], how='outer'), portefeuille)
+    portefeuille = portefeuille.replace('CASH & CASH FUND (EUR)', 'VRIJE RUIMTE')
+    portefeuille.set_index(['Product', 'Symbool/ISIN'], inplace=True)
+    portefeuille = portefeuille.fillna(0)
     return portefeuille
 
 
