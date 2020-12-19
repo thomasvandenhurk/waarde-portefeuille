@@ -19,7 +19,7 @@ def read_deposits():
 
 def read_portefeuille(path_to_portefeuille_dir=os.path.join('data', 'exports'), suffix='.csv'):
     """
-    List all file names in path_to_portefeuille_dir with a certain suffix.
+    Create a list of dataframes with portefeuille holdings.
 
     :param path_to_portefeuille_dir: path to data folder.
     :param suffix: suffix in which file names must end.
@@ -41,7 +41,7 @@ def read_portefeuille(path_to_portefeuille_dir=os.path.join('data', 'exports'), 
 
     # merge all files and set nan to zero
     portefeuille = reduce(lambda x, y: pd.merge(x, y, on=['Product', 'Symbool/ISIN'], how='outer'), portefeuille)
-    portefeuille = portefeuille.replace('CASH & CASH FUND (EUR)', 'VRIJE RUIMTE')
+    portefeuille = portefeuille.replace('CASH & CASH FUND & FTX CASH(EUR)', 'VRIJE RUIMTE')
     portefeuille.set_index(['Product', 'Symbool/ISIN'], inplace=True)
     portefeuille = portefeuille.fillna(0)
     return portefeuille

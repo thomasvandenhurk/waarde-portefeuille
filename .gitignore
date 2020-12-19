@@ -134,3 +134,4 @@ dmypy.json
 /data/exports/*.xlsx
 /data/exports/*.csv
 /data/deposits/deposits.csv
+/results/*.xlsx
