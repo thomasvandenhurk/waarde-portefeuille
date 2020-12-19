@@ -3,8 +3,8 @@ from src.write_output import write_portefeuille
 
 
 def main():
-    portefeuille, deposits = construct_portefeuille()
-    write_portefeuille(portefeuille, deposits)
+    portefeuille, totals = construct_portefeuille()
+    write_portefeuille(portefeuille, totals)
 
 
 if __name__ == '__main__':

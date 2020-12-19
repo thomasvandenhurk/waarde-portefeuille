@@ -28,19 +28,19 @@ def add_percentages(portefeuille):
 def calculate_totals(portefeuille, deposits):
     # create total of each column
     sum_portefeuille = portefeuille.sum(axis=0)
-    sum_portefeuille.loc[~sum_portefeuille.index.str.contains('(waarde)')] = 0
+    sum_portefeuille.loc[~sum_portefeuille.index.str.contains('waarde')] = 0
 
     # calculate difference with previous date
-    # TODO look at userwarning
     difference = [sum_portefeuille.iloc[i] - sum_portefeuille.iloc[i - 3] for i in range(3, len(portefeuille.columns))]
-    # add three leading zeros
-    difference = [0, 0, 0] + difference
+    difference = [0, sum_portefeuille.iloc[1], 0] + difference  # make first entry as totaal portefeuille
 
     # add deposits
+    # TODO match real deposits on date
+    deposits = [0, 600, 0, 0, 1000, 0, 0, 1000, 0]
 
     # combine info
-    totals = pd.DataFrame([sum_portefeuille.values, difference], columns=portefeuille.columns,
-                          index=['Totaal portefeuille', 'Verschil t.o.v. vorige maand'])
+    totals = pd.DataFrame([sum_portefeuille.values, difference, deposits], columns=portefeuille.columns,
+                          index=['Totaal portefeuille', 'Verschil t.o.v. vorige maand', 'Aankopen'])
 
     return totals
 
@@ -51,4 +51,4 @@ def construct_portefeuille():
     deposits = read_deposits()
     totals = calculate_totals(portefeuille=portefeuille, deposits=deposits)
 
-    return portefeuille, deposits
+    return portefeuille, totals
