@@ -1,3 +1,6 @@
+import warnings
+
+import datetime as dt
 import pandas as pd
 
 from src.read_data import read_portefeuille, read_deposits
@@ -35,11 +38,35 @@ def calculate_totals(portefeuille, deposits):
     difference = [0, sum_portefeuille.iloc[1], 0] + difference  # make first entry as totaal portefeuille
 
     # add deposits
-    # TODO match real deposits on date
-    deposits = [0, 600, 0, 0, 1000, 0, 0, 1000, 0]
+    dates = list(set([x[:10] for x in sum_portefeuille.index.tolist()]))
+    dates = [dt.datetime.strptime(date, '%Y-%m-%d') for date in dates]
+    dates.sort()
+
+    # match to nearest date in the future
+    date_new = []
+    for index, row in deposits.iterrows():
+        diff = [(pd.Timestamp.to_pydatetime(row['Datum'])-date).days for date in dates]
+        maxmin = [i for i in diff if i <= 0]
+        try:
+            minpos = diff.index(max(maxmin))
+            date_new.append(dates[minpos])
+        except ValueError:
+            date_new.append(dates[-1])
+            warnings.warn('A "Stortingsdatum is after the newest export. '
+                          'It is set to equal the latest date of the export."', UserWarning)
+
+    deposits['Datum'] = date_new
+    deposits = deposits.groupby('Datum').sum().reset_index()
+
+    # map to all dates
+    deposits_full = pd.Series(0, index=sum_portefeuille.index)
+    for index, row in deposits.iterrows():
+        deposits_full.loc[deposits_full.index.str.contains(str(row['Datum'])[:10])] = row['Storting']
+    deposits_full.loc[~deposits_full.index.str.contains('waarde')] = 0
 
     # combine info
-    totals = pd.DataFrame([sum_portefeuille.values, difference, deposits], columns=portefeuille.columns,
+    totals = pd.DataFrame([sum_portefeuille.values, difference, deposits_full.values],
+                          columns=portefeuille.columns,
                           index=['Totaal portefeuille', 'Verschil t.o.v. vorige maand', 'Aankopen'])
 
     return totals
