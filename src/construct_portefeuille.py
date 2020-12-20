@@ -84,7 +84,7 @@ def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.D
     # combine info
     totals = pd.DataFrame([sum_portefeuille.values, difference, deposits_full.values],
                           columns=portefeuille.columns,
-                          index=['Totaal portefeuille', 'Verschil t.o.v. vorige maand', 'Aankopen'])
+                          index=['Totaal portefeuille', 'Verschil t.o.v. vorige maand', 'Inleg'])
 
     return totals
 

@@ -3,7 +3,8 @@ import os
 import pandas as pd
 
 from settings import header_r, header_l, port_header, port_header_border, aantal_pos, aantal_neg, aantal_neutral, \
-    waarde, procent_pos, procent_neg, procent_neutral, totaal_font, totaal_num, winstverlies_font, winstverlies_num
+    waarde, procent_pos, procent_neg, procent_neutral, totaal_font, totaal_num, winstverlies_font, winstverlies_num, \
+    jaaroverzicht_font, jaaroverzicht_num
 
 
 def format_header(wb, ws, year: int):
@@ -149,7 +150,7 @@ def format_winstverlies(wb, ws, totals: pd.DataFrame, start_row: int):
     :param start_row: Integer to start writing at.
     """
 
-    winstverlies = totals.loc['Verschil t.o.v. vorige maand', :] - totals.loc['Aankopen', :]
+    winstverlies = totals.loc['Verschil t.o.v. vorige maand', :] - totals.loc['Inleg', :]
 
     format_procent_pos = wb.add_format(procent_pos)
     format_procent_neg = wb.add_format(procent_neg)
@@ -174,6 +175,45 @@ def format_winstverlies(wb, ws, totals: pd.DataFrame, start_row: int):
                     ws.write(start_row + 1, i + 1, value, format_procent_neutral)
             else:
                 ws.write(start_row + 1, i + 1, "", format_winstverlies_num)
+
+
+def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int):
+    """
+    Format jaaroverzicht and write to sheet.
+
+    :param wb: xlsxwriter Workbook object.
+    :param ws: xlsxwriter Worksheet object.
+    :param totals: Dataframe with totals overview.
+    :param start_row: Integer to start writing at.
+    """
+
+    format_winstverlies_font = wb.add_format(winstverlies_font)
+    format_jaaroverzicht_font = wb.add_format(jaaroverzicht_font)
+    format_jaaroverzicht_num = wb.add_format(jaaroverzicht_num)
+
+    totals_waarde = totals.loc[:, totals.columns.str.contains('waarde')]
+    totals_waarde = totals_waarde.append(pd.Series(
+        totals_waarde.loc['Verschil t.o.v. vorige maand', :] - totals_waarde.loc['Inleg', :], name='Winst/Verlies'
+    ), ignore_index=False).transpose()
+    totals_waarde.index = totals_waarde.index.str[:10]
+    totals_waarde = totals_waarde[['Totaal portefeuille', 'Inleg', 'Winst/Verlies']].reset_index()
+    totals_waarde['Inleg'] = totals_waarde['Inleg'].cumsum()
+    totals_waarde = totals_waarde.rename(columns={'Totaal portefeuille': 'Portefeuille'})
+
+    for i in range(len(totals.columns) + 1):
+        if 0 < i < len(totals_waarde.columns):
+            ws.write(start_row, i, totals_waarde.columns[i], format_jaaroverzicht_font)
+        elif i >= len(totals_waarde.columns):
+            ws.write(start_row, i, '', format_jaaroverzicht_font)
+        else:
+            ws.write(start_row, 0, 'Jaaroverzicht', format_winstverlies_font)
+
+    for i in range(len(totals_waarde.index)):
+        for j in range(len(totals_waarde.columns)):
+            if j > 0:
+                ws.write(start_row + i + 1, j, totals_waarde.iloc[i, j], format_jaaroverzicht_num)
+            else:
+                ws.write(start_row + i + 1, j, totals_waarde.iloc[i, j])
 
 
 def write_portefeuille(portefeuille: pd.DataFrame, totals: pd.DataFrame, output_path: str = 'results'):
@@ -201,6 +241,8 @@ def write_portefeuille(portefeuille: pd.DataFrame, totals: pd.DataFrame, output_
     format_totals(wb, ws, totals, start_row)
     start_row += len(totals.index) + 1
     format_winstverlies(wb, ws, totals, start_row)
+    start_row += 4
+    format_jaaroverzicht(wb, ws, totals, start_row)
     format_header(wb, ws, 2020)
     set_cell_widths(ws, len(portefeuille.columns))
     ws.freeze_panes(2, 1)
