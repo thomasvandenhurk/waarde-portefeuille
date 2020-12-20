@@ -50,7 +50,6 @@ def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.D
 
     # create total of each column
     sum_portefeuille = portefeuille.sum(axis=0)
-    sum_portefeuille.loc[~sum_portefeuille.index.str.contains('waarde')] = 0
 
     # calculate difference with previous date
     difference = [sum_portefeuille.iloc[i] - sum_portefeuille.iloc[i - 3] for i in range(3, len(portefeuille.columns))]
@@ -81,7 +80,6 @@ def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.D
     deposits_full = pd.Series(0, index=sum_portefeuille.index)
     for index, row in deposits.iterrows():
         deposits_full.loc[deposits_full.index.str.contains(str(row['Datum'])[:10])] = row['Storting']
-    deposits_full.loc[~deposits_full.index.str.contains('waarde')] = 0
 
     # combine info
     totals = pd.DataFrame([sum_portefeuille.values, difference, deposits_full.values],
