@@ -3,14 +3,17 @@ header_r = {'bold': True, 'font_size': 24, 'align': 'right'}
 header_l = {'bold': True, 'font_size': 24, 'align': 'left'}
 
 # formatting - portefeuille
-port_header = {'bold': True, 'bg_color': '#ECA359', 'align': 'center'}
-port_header_border = {'bold': True, 'bg_color': '#ECA359', 'align': 'center', 'left': 1}
-aantal_pos = {'font_color': '#796E63', 'bg_color': '#C6EFCE', 'left': 1}
-aantal_neg = {'font_color': '#796E63', 'bg_color': '#FFC7CE', 'left': 1}
+header_color = '#ECA359'
+positive_color = '#C6EFCE'
+negative_color = '#FFC7CE'
+port_header = {'bold': True, 'bg_color': header_color, 'align': 'center'}
+port_header_border = {'bold': True, 'bg_color': header_color, 'align': 'center', 'left': 1}
+aantal_pos = {'font_color': '#796E63', 'bg_color': positive_color, 'left': 1}
+aantal_neg = {'font_color': '#796E63', 'bg_color': negative_color, 'left': 1}
 aantal_neutral = {'font_color': '#796E63', 'left': 1}
 waarde = {'num_format': '#,##0.00;-#,##0.00;—;@'}
-procent_pos = {'num_format': '0%', 'bg_color': '#C6EFCE'}
-procent_neg = {'num_format': '0%', 'bg_color': '#FFC7CE'}
+procent_pos = {'num_format': '0%', 'bg_color': positive_color}
+procent_neg = {'num_format': '0%', 'bg_color': negative_color}
 procent_neutral = {'num_format': '0%'}
 
 # formatting - totals
