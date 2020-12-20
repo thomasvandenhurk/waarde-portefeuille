@@ -1,4 +1,5 @@
 import warnings
+from typing import Tuple
 
 import datetime as dt
 import pandas as pd
@@ -6,7 +7,14 @@ import pandas as pd
 from src.read_data import read_portefeuille, read_deposits
 
 
-def add_percentages(portefeuille):
+def add_percentages(portefeuille: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add percentages to portefeuille dataframe.
+
+    :param portefeuille: Dataframe with portefeuille data.
+    :return portefeuille: Dataframe with percentage data appended.
+    """
+
     # init first column
     col_date = portefeuille.columns[0].replace('(aantal)', '').replace('(waarde)', '')
     portefeuille.insert(2, col_date + '(procent)', 0)
@@ -28,7 +36,18 @@ def add_percentages(portefeuille):
     return portefeuille
 
 
-def calculate_totals(portefeuille, deposits):
+def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create total overview of portefeuille. The following information is created:
+        - Totaal portefeuille
+        - Verschil t.o.v. vorige maand
+        - Aankopen
+
+    :param portefeuille: Dataframe with portefeuille data.
+    :param deposits: Dataframe with deposits data.
+    :return totals: Dataframe with the respective totals.
+    """
+
     # create total of each column
     sum_portefeuille = portefeuille.sum(axis=0)
     sum_portefeuille.loc[~sum_portefeuille.index.str.contains('waarde')] = 0
@@ -72,7 +91,14 @@ def calculate_totals(portefeuille, deposits):
     return totals
 
 
-def construct_portefeuille():
+def construct_portefeuille() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Wrapper to construct portefeuille data. The portefeuille data is collected and a total overview is generated.
+
+    :return portefeuille: Dataframe with percentage data appended.
+    :return totals: Dataframe with the respective totals.
+    """
+
     portefeuille = read_portefeuille()
     portefeuille = add_percentages(portefeuille=portefeuille)
     deposits = read_deposits()

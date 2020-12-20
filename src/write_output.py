@@ -6,20 +6,44 @@ from settings import header_r, header_l, port_header, port_header_border, aantal
     waarde, procent_pos, procent_neg, procent_neutral, totaal_font, totaal_num, winstverlies_font, winstverlies_num
 
 
-def format_header(wb, ws, year):
+def format_header(wb, ws, year: int):
+    """
+    Format sheet header.
+
+    :param wb: xlsxwriter Workbook object.
+    :param ws: xlsxwriter Worksheet object.
+    :param year: Dataframe with totals overview.
+    """
+
     format_header_r = wb.add_format(header_r)
     format_header_l = wb.add_format(header_l)
     ws.write(0, 0, year, format_header_r)
     ws.write(0, 1, "Waarde Portefeuille", format_header_l)
 
 
-def set_cell_widths(ws, colnum):
+def set_cell_widths(ws, colnum: int):
+    """
+    Format column widths for the sheet.
+
+    :param ws: xlsxwriter Worksheet object.
+    :param colnum: Integer last col to set the width of.
+    """
+
     ws.set_column(0, 0, 34)
     ws.set_column(1, colnum, 17)
     ws.set_row(0, 32)
 
 
-def format_portefeuille(wb, ws, df, start_row):
+def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int):
+    """
+    Format portefeuille overview and write to sheet.
+
+    :param wb: xlsxwriter Workbook object.
+    :param ws: xlsxwriter Worksheet object.
+    :param df: Dataframe with portefeuille overview.
+    :param start_row: Integer to start writing at.
+    """
+
     # portefeuille header
     format_port_header = wb.add_format(port_header)
     format_port_header_border = wb.add_format(port_header_border)
@@ -74,7 +98,16 @@ def format_portefeuille(wb, ws, df, start_row):
                 ws.write(start_row + i + 1, j, df.iloc[i, j])
 
 
-def format_totals(wb, ws, totals, start_row):
+def format_totals(wb, ws, totals: pd.DataFrame, start_row: int):
+    """
+    Format overview totals and write to sheet.
+
+    :param wb: xlsxwriter Workbook object.
+    :param ws: xlsxwriter Worksheet object.
+    :param totals: Dataframe with totals overview.
+    :param start_row: Integer to start writing at.
+    """
+
     format_totaal_font = wb.add_format(totaal_font)
     format_totaal_num = wb.add_format(totaal_num)
     totals = totals.reset_index()
@@ -106,7 +139,16 @@ def format_totals(wb, ws, totals, start_row):
                     ws.write(start_row + i + 1, j, totals.iloc[i, j])
 
 
-def format_winstverlies(wb, ws, totals, start_row):
+def format_winstverlies(wb, ws, totals: pd.DataFrame, start_row: int):
+    """
+    Format wint verlies row and write to sheet.
+
+    :param wb: xlsxwriter Workbook object.
+    :param ws: xlsxwriter Worksheet object.
+    :param totals: Dataframe with totals overview.
+    :param start_row: Integer to start writing at.
+    """
+
     winstverlies = totals.loc['Verschil t.o.v. vorige maand', :] - totals.loc['Aankopen', :]
 
     format_procent_pos = wb.add_format(procent_pos)
@@ -134,7 +176,15 @@ def format_winstverlies(wb, ws, totals, start_row):
                 ws.write(start_row + 1, i + 1, "", format_winstverlies_num)
 
 
-def write_portefeuille(portefeuille, totals, output_path='results'):
+def write_portefeuille(portefeuille: pd.DataFrame, totals: pd.DataFrame, output_path: str = 'results'):
+    """
+    Write portefeuille info to Excel.
+
+    :param portefeuille: DataFrame with portefeuille info.
+    :param totals: Dataframe with totals info.
+    :param output_path: String where to write the output to.
+    """
+
     writer = pd.ExcelWriter(os.path.join(output_path, 'portefeuille.xlsx'), engine='xlsxwriter')
     wb = writer.book
     sheet_name = "Portefeuille"

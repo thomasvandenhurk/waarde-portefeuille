@@ -5,7 +5,7 @@ from os import listdir
 import pandas as pd
 
 
-def read_deposits():
+def read_deposits() -> pd.DataFrame:
     """
     Read deposit file in folder data/deposits.
 
@@ -17,7 +17,8 @@ def read_deposits():
     return deposits
 
 
-def read_portefeuille(path_to_portefeuille_dir=os.path.join('data', 'exports'), suffix='.csv'):
+def read_portefeuille(path_to_portefeuille_dir: str = os.path.join('data', 'exports'), suffix: str = '.csv') \
+        -> pd.DataFrame:
     """
     Create a list of dataframes with portefeuille holdings.
 
@@ -47,7 +48,7 @@ def read_portefeuille(path_to_portefeuille_dir=os.path.join('data', 'exports'), 
     return portefeuille
 
 
-def list_filenames(path_to_portefeuille_dir, suffix):
+def list_filenames(path_to_portefeuille_dir: str, suffix: str) -> list:
     """
     List all file names in path_to_data_dir with a certain suffix.
 
