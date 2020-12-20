@@ -1,10 +1,11 @@
 import os
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from settings import header_r, header_l, port_header, port_header_border, aantal_pos, aantal_neg, aantal_neutral, \
     waarde, procent_pos, procent_neg, procent_neutral, totaal_font, totaal_num, winstverlies_font, winstverlies_num, \
-    jaaroverzicht_font, jaaroverzicht_num
+    jaaroverzicht_font, jaaroverzicht_num, header_color, positive_color
 
 
 def format_header(wb, ws, year: int):
@@ -30,7 +31,7 @@ def set_cell_widths(ws, colnum: int):
     :param colnum: Integer last col to set the width of.
     """
 
-    ws.set_column(0, 0, 34)
+    ws.set_column(0, 0, 35)
     ws.set_column(1, colnum, 17)
     ws.set_row(0, 32)
 
@@ -214,6 +215,30 @@ def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int):
                 ws.write(start_row + i + 1, j, totals_waarde.iloc[i, j], format_jaaroverzicht_num)
             else:
                 ws.write(start_row + i + 1, j, totals_waarde.iloc[i, j])
+
+    add_jaaroverzicht_plot(ws, totals_waarde, start_row)
+
+
+def add_jaaroverzicht_plot(ws, totals_waarde, start_row):
+    """
+    Capture jaaroverzicht in image and write to Excel.
+
+    :param ws: xlsxwriter Worksheet object.
+    :param totals_waarde: Dataframe with totals info.
+    :param start_row: Integer to start writing at.
+    """
+
+    plt.plot(totals_waarde['Portefeuille'], color=header_color, label='Portefeuille')
+    plt.plot(totals_waarde['Inleg'], 'k', label='Inleg')
+    totals_waarde['Winst/Verlies'].plot(kind='bar', color=positive_color, label='Winst/Verlies')
+
+    ax = plt.gca()
+    ax.set_xticklabels(totals_waarde['index'])
+    plt.xticks(rotation=45)
+    plt.title('Portefeuille ontwikkeling')
+    plt.legend()
+    plt.savefig('portefeuille_ontwikkeling.png', bbox_inches='tight', dpi=100)
+    ws.insert_image(start_row + 2, 5, 'portefeuille_ontwikkeling.png')
 
 
 def write_portefeuille(portefeuille: pd.DataFrame, totals: pd.DataFrame, output_path: str = 'results'):

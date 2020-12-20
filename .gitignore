@@ -135,3 +135,6 @@ dmypy.json
 /data/exports/*.csv
 /data/deposits/deposits.csv
 /results/*.xlsx
+
+# figure
+portefeuille_ontwikkeling.png
