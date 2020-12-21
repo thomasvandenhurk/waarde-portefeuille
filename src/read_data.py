@@ -12,8 +12,15 @@ def read_deposits() -> pd.DataFrame:
     :return overview of deposits over time.
     """
 
-    deposits = pd.read_csv(os.path.join('data', 'deposits', 'deposits.csv'), sep=';')
+    deposits = pd.read_csv(os.path.join('data', 'deposits', 'Account.csv'))
+    deposits = deposits.loc[
+        (deposits['Omschrijving'] == 'iDEAL Deposit') | (deposits['Omschrijving'] == 'iDEAL storting')
+    ].copy()
+    deposits = deposits.rename(columns={'Unnamed: 8': 'Storting'})
+    deposits = deposits[['Datum', 'Storting']]
+    deposits['Storting'] = deposits['Storting'].str.replace(',', '.').astype(float)
     deposits['Datum'] = pd.to_datetime(deposits['Datum'], format='%d-%m-%Y')
+
     return deposits
 
 

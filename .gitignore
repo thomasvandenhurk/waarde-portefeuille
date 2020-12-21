@@ -133,7 +133,7 @@ dmypy.json
 /data/exports/*.xls
 /data/exports/*.xlsx
 /data/exports/*.csv
-/data/deposits/deposits.csv
+/data/deposits/Account.csv
 /results/*.xlsx
 
 # figure
