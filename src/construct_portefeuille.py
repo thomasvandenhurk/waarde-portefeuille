@@ -69,9 +69,9 @@ def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.D
             minpos = diff.index(max(maxmin))
             date_new.append(dates[minpos])
         except ValueError:
+            deposits.loc[index, 'Storting'] = 0
             date_new.append(dates[-1])
-            warnings.warn('A "Stortingsdatum is after the newest export. '
-                          'It is set to equal the latest date of the export."', UserWarning)
+            warnings.warn('A "Stortingsdatum is after the newest export and it set to zero."', UserWarning)
 
     deposits['Datum'] = date_new
     deposits = deposits.groupby('Datum').sum().reset_index()
