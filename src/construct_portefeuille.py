@@ -71,7 +71,7 @@ def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.D
         except ValueError:
             deposits.loc[index, 'Storting'] = 0
             date_new.append(dates[-1])
-            warnings.warn('A "Stortingsdatum is after the newest export and it set to zero."', UserWarning)
+            warnings.warn('A "Stortingsdatum is after the newest export and is set to zero."', UserWarning)
 
     deposits['Datum'] = date_new
     deposits = deposits.groupby('Datum').sum().reset_index()
