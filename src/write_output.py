@@ -237,6 +237,7 @@ def add_jaaroverzicht_plot(ws, totals_waarde, start_row):
     plt.xticks(rotation=45)
     plt.title('Portefeuille ontwikkeling')
     plt.legend()
+    plt.grid(True)
     plt.savefig('portefeuille_ontwikkeling.png', bbox_inches='tight', dpi=100)
     ws.insert_image(start_row + 2, 5, 'portefeuille_ontwikkeling.png')
 
