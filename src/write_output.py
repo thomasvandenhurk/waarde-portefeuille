@@ -49,6 +49,11 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
 
     df.drop('Symbool/ISIN', axis=1, inplace=True)
 
+    keeps = (df.drop('Product', axis=1) != 0).any(axis=1)
+    df = df.loc[keeps].copy()
+    if port_prev is not None:
+        port_prev = port_prev.loc[keeps].copy()
+
     # portefeuille header
     format_port_header = wb.add_format(port_header)
     format_port_header_border = wb.add_format(port_header_border)
@@ -276,12 +281,18 @@ def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_
         start_row = 1
 
         # format sheet
+        # get the length of the portefeuille that will be written to the sheet
+        len_port = sum((portefeuille.drop(['Product', 'Symbool/ISIN'], axis=1) != 0).any(axis=1))
         format_portefeuille(wb, ws, portefeuille, start_row, port_prev)
-        start_row += len(portefeuille.index) + 2
+        start_row += len_port + 2
+
+        # write totals, winstverlies
         format_totals(wb, ws, totals, start_row)
         start_row += len(totals.index) + 1
         format_winstverlies(wb, ws, winstverlies, start_row)
         start_row += 4
+
+        # format jaaroverzicht. keep the total invest amount to take to the next year total inleg
         total_invested = format_jaaroverzicht(wb, ws, totals, start_row, key, total_invested)
         format_header(wb, ws, key)
         set_cell_widths(ws, len(portefeuille.columns))
