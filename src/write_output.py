@@ -140,17 +140,15 @@ def format_totals(wb, ws, totals: pd.DataFrame, start_row: int):
                     ws.write(start_row + i + 1, j, totals.iloc[i, j])
 
 
-def format_winstverlies(wb, ws, totals: pd.DataFrame, start_row: int):
+def format_winstverlies(wb, ws, winstverlies: pd.Series, start_row: int):
     """
     Format wint verlies row and write to sheet.
 
     :param wb: xlsxwriter Workbook object.
     :param ws: xlsxwriter Worksheet object.
-    :param totals: Dataframe with totals overview.
+    :param winstverlies: Series with winstverlies overview.
     :param start_row: Integer to start writing at.
     """
-
-    winstverlies = totals.loc['Verschil t.o.v. vorige maand', :] - totals.loc['Inleg', :]
 
     format_procent_pos = wb.add_format(procent_pos)
     format_procent_neg = wb.add_format(procent_neg)
@@ -166,13 +164,12 @@ def format_winstverlies(wb, ws, totals: pd.DataFrame, start_row: int):
             ws.write(start_row + 1, i + 1, "", format_winstverlies_num)
         else:
             if i > 2:
-                value = winstverlies.iloc[i - 1] / totals.iloc[0, i - 4]
-                if value > 0:
-                    ws.write(start_row + 1, i + 1, value, format_procent_pos)
-                elif value < 0:
-                    ws.write(start_row + 1, i + 1, value, format_procent_neg)
+                if winstverlies.iloc[i] > 0:
+                    ws.write(start_row + 1, i + 1, winstverlies.iloc[i], format_procent_pos)
+                elif winstverlies.iloc[i] < 0:
+                    ws.write(start_row + 1, i + 1, winstverlies.iloc[i], format_procent_neg)
                 else:
-                    ws.write(start_row + 1, i + 1, value, format_procent_neutral)
+                    ws.write(start_row + 1, i + 1, winstverlies.iloc[i], format_procent_neutral)
             else:
                 ws.write(start_row + 1, i + 1, "", format_winstverlies_num)
 
@@ -241,12 +238,14 @@ def add_jaaroverzicht_plot(ws, totals_waarde, start_row):
     ws.insert_image(start_row + 2, 5, 'portefeuille_ontwikkeling.png')
 
 
-def write_portefeuille(portefeuille: pd.DataFrame, totals: pd.DataFrame, output_path: str = 'results'):
+def write_portefeuille(portefeuille: pd.DataFrame, totals: pd.DataFrame, winstverlies: pd.Series,
+                       output_path: str = 'results'):
     """
     Write portefeuille info to Excel.
 
     :param portefeuille: DataFrame with portefeuille info.
     :param totals: Dataframe with totals info.
+    :param winstverlies: Series with winstverlies.
     :param output_path: String where to write the output to.
     """
 
@@ -265,7 +264,7 @@ def write_portefeuille(portefeuille: pd.DataFrame, totals: pd.DataFrame, output_
     start_row += len(portefeuille.index) + 2
     format_totals(wb, ws, totals, start_row)
     start_row += len(totals.index) + 1
-    format_winstverlies(wb, ws, totals, start_row)
+    format_winstverlies(wb, ws, winstverlies, start_row)
     start_row += 4
     format_jaaroverzicht(wb, ws, totals, start_row)
     format_header(wb, ws, 2020)
