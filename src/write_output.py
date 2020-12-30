@@ -50,9 +50,10 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
     df.drop('Symbool/ISIN', axis=1, inplace=True)
 
     keeps = (df.drop('Product', axis=1) != 0).any(axis=1)
-    df = df.loc[keeps].copy()
+    df = df.loc[keeps].reset_index(drop=True).copy()
     if port_prev is not None:
-        port_prev = port_prev.loc[keeps].copy()
+        port_prev = port_prev.loc[keeps].reset_index(drop=True).copy()
+        port_prev = port_prev[port_prev.columns[-1][:10] + ' (aantal)']
 
     # portefeuille header
     format_port_header = wb.add_format(port_header)
@@ -79,8 +80,10 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
 
     for i in range(len(df.index)):
         for j in range(len(df.columns)):
+            # writing aantallen
             if 'aantal' in df.columns[j]:
                 if j > 2:
+                    # we can determine the aantal coloring based on previous entry
                     if df.iloc[i, j] > df.iloc[i, j - 3] and i > 0:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_pos)
                     elif df.iloc[i, j] < df.iloc[i, j - 3] and i > 0:
@@ -89,8 +92,19 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neutral)
                     else:
                         ws.write(start_row + i + 1, j, '', format_aantal_neutral)
-                elif i > 0:
+                elif i > 0 and port_prev is None:
+                    # first entry of the year and there is not previous data
                     ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neutral)
+                elif i > 0:
+                    # first entry of the year but we have a previous year
+                    if df.iloc[i, j] > port_prev[i] and i > 0:
+                        ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_pos)
+                    elif df.iloc[i, j] < port_prev[i] and i > 0:
+                        ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neg)
+                    elif i > 0:
+                        ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neutral)
+                    else:
+                        ws.write(start_row + i + 1, j, '', format_aantal_neutral)
 
             elif 'waarde' in df.columns[j]:
                 ws.write(start_row + i + 1, j, df.iloc[i, j], format_waarde)
