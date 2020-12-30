@@ -27,3 +27,18 @@ winstverlies_num = {'bold': True, 'font_size': 14, 'num_format': '€ #,##0.00;(
 # formatting - jaaroverzicht
 jaaroverzicht_font = {'bg_color': '#D1CDCC'}
 jaaroverzicht_num = {'num_format': '€ #,##0.00;(€ #,##0.00);0'}
+
+months_translation = {
+    'January': 'Januari',
+    'February': 'Februari',
+    'March': 'Maart',
+    'April': 'April',
+    'May': 'Mei',
+    'June': 'Juni',
+    'July': 'Juli',
+    'August': 'Augustus',
+    'September': 'September',
+    'October': 'Oktober',
+    'November': 'November',
+    'December': 'December'
+}

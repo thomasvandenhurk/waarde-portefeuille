@@ -1,3 +1,4 @@
+import calendar
 import os
 
 import pandas as pd
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from settings import header_r, header_l, port_header, port_header_border, aantal_pos, aantal_neg, aantal_neutral, \
     waarde, procent_pos, procent_neg, procent_neutral, totaal_font, totaal_num, winstverlies_font, winstverlies_num, \
-    jaaroverzicht_font, jaaroverzicht_num, header_color, positive_color
+    jaaroverzicht_font, jaaroverzicht_num, header_color, positive_color, months_translation
 
 
 def format_header(wb, ws, year: int):
@@ -61,6 +62,7 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
     for col_num, value in enumerate(df.columns.values):
         if 'waarde' in value:
             value = value.replace(' (waarde)', '')
+            value = str(int(value[8:10])) + ' ' + months_translation[calendar.month_name[int(value[5:7])]]
             ws.write(start_row, col_num, value, format_port_header)
         elif 'aantal' in value:
             value = ''
@@ -109,16 +111,15 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
             elif 'waarde' in df.columns[j]:
                 ws.write(start_row + i + 1, j, df.iloc[i, j], format_waarde)
             elif 'procent' in df.columns[j]:
-                if j > 2:
-                    if df.iloc[i, j] > 0 and i > 0:
+                if i > 0:
+                    if df.iloc[i, j] > 0:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_procent_pos)
-                    elif df.iloc[i, j] < 0 and i > 0:
+                    elif df.iloc[i, j] < 0:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_procent_neg)
-                    elif i > 0:
+                    else:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_procent_neutral)
-                elif i > 0:
-                    ws.write(start_row + i + 1, j, df.iloc[i, j], format_procent_neutral)
             else:
+                # product names
                 ws.write(start_row + i + 1, j, df.iloc[i, j])
 
 
