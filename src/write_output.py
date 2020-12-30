@@ -127,13 +127,12 @@ def format_totals(wb, ws, totals: pd.DataFrame, start_row: int):
                         ws.write(start_row + i + 1, j, totals.iloc[i, j])
                 elif 'procent' in totals.columns[j]:
                     if j > 4 and i == 0:
-                        value = (totals.iloc[i, j - 1] - totals.iloc[i, j - 4]) / totals.iloc[i, j - 4]
-                        if value > 0:
-                            ws.write(start_row + i + 1, j, value, format_procent_pos)
-                        elif value < 0:
-                            ws.write(start_row + i + 1, j, value, format_procent_neg)
+                        if totals.iloc[i, j] > 0:
+                            ws.write(start_row + i + 1, j, totals.iloc[i, j], format_procent_pos)
+                        elif totals.iloc[i, j] < 0:
+                            ws.write(start_row + i + 1, j, totals.iloc[i, j], format_procent_neg)
                         else:
-                            ws.write(start_row + i + 1, j, value, format_procent_neutral)
+                            ws.write(start_row + i + 1, j, totals.iloc[i, j], format_procent_neutral)
             else:
                 if i == 0:
                     ws.write(start_row + i + 1, j, totals.iloc[i, j], format_totaal_font)

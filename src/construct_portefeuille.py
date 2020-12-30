@@ -51,6 +51,13 @@ def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.D
     # create total of each column
     sum_portefeuille = portefeuille.sum(axis=0)
 
+    # add procent change in sum_portefeuille
+    for i in range(len(sum_portefeuille.index)):
+        if 'procent' in sum_portefeuille.index[i] and i > 3:
+            sum_portefeuille[i] = (sum_portefeuille.iloc[i - 1] - sum_portefeuille.iloc[i - 4]) / \
+                                  sum_portefeuille.iloc[i - 4]
+
+
     # calculate difference with previous date
     difference = [sum_portefeuille.iloc[i] - sum_portefeuille.iloc[i - 3] for i in range(3, len(portefeuille.columns))]
     difference = [0, sum_portefeuille.iloc[1], 0] + difference  # make first entry as totaal portefeuille
