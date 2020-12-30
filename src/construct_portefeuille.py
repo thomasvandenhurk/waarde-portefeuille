@@ -113,13 +113,41 @@ def calculate_winstverlies(totals):
     return winstverlies
 
 
-def construct_portefeuille() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+def split_per_year(portefeuille: pd.DataFrame, totals: pd.DataFrame, winstverlies: pd.Series) \
+        -> Tuple[dict, dict, dict]:
+    """
+    Change the full portefeuille, totals and winstverlies data per year.
+
+    :param portefeuille: Dataframe with percentage data appended.
+    :param totals: Dataframe with the respective totals.
+    :param winstverlies: Dataframe with the respective winstverlies.
+    :return portefeuille_dict: Dict with percentage data appended per year.
+    :return totals_dict: Dict with the respective totals per year.
+    :return winstverlies_dict: Dict with the respective winstverlies per year.
+    """
+
+    years = sorted(list(set([year[:4] for year in list(portefeuille.columns)[2:]])))
+
+    portefeuille_dict = {}
+    totals_dict = {}
+    winstverlies_dict = {}
+    for year in years:
+        portefeuille_dict[year] = portefeuille.loc[:, portefeuille.columns.str.contains('Product|Symbool|' + year)]. \
+            copy()
+        totals_dict[year] = totals.loc[:, totals.columns.str.contains(year)].copy()
+        winstverlies_dict[year] = winstverlies.loc[winstverlies.index.str.contains(year)].copy()
+
+    return portefeuille_dict, totals_dict, winstverlies_dict
+
+
+def construct_portefeuille() -> Tuple[dict, dict, dict]:
     """
     Wrapper to construct portefeuille data. The portefeuille data is collected and a total overview is generated.
+    Finally, the data is gathered in a dict per year.
 
-    :return portefeuille: Dataframe with percentage data appended.
-    :return totals: Dataframe with the respective totals.
-    :return winstverlies: Series with the respective winstverlies.
+    :return portefeuille_dict: Dict with percentage data appended per year.
+    :return totals_dict: Dict with the respective totals per year.
+    :return winstverlies_dict: Dict with the respective winstverlies per year.
     """
 
     portefeuille = read_portefeuille()
@@ -127,5 +155,9 @@ def construct_portefeuille() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
     deposits = read_deposits()
     totals = calculate_totals(portefeuille=portefeuille, deposits=deposits)
     winstverlies = calculate_winstverlies(totals=totals)
+    portefeuille.reset_index(inplace=True)
 
-    return portefeuille, totals, winstverlies
+    # split data per year
+    portefeuille_dict, totals_dict, winstverlies_dict = split_per_year(portefeuille, totals, winstverlies)
+
+    return portefeuille_dict, totals_dict, winstverlies_dict

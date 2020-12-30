@@ -36,7 +36,7 @@ def set_cell_widths(ws, colnum: int):
     ws.set_row(0, 32)
 
 
-def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int):
+def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.DataFrame = None):
     """
     Format portefeuille overview and write to sheet.
 
@@ -44,7 +44,10 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int):
     :param ws: xlsxwriter Worksheet object.
     :param df: Dataframe with portefeuille overview.
     :param start_row: Integer to start writing at.
+    :param port_prev: Dataframe with portefeuille data from previous year.
     """
+
+    df.drop('Symbool/ISIN', axis=1, inplace=True)
 
     # portefeuille header
     format_port_header = wb.add_format(port_header)
@@ -140,7 +143,7 @@ def format_totals(wb, ws, totals: pd.DataFrame, start_row: int):
                     ws.write(start_row + i + 1, j, totals.iloc[i, j])
 
 
-def format_winstverlies(wb, ws, winstverlies: pd.Series, start_row: int):
+def format_winstverlies(wb, ws, winstverlies: pd.DataFrame, start_row: int):
     """
     Format wint verlies row and write to sheet.
 
@@ -174,7 +177,7 @@ def format_winstverlies(wb, ws, winstverlies: pd.Series, start_row: int):
                 ws.write(start_row + 1, i + 1, "", format_winstverlies_num)
 
 
-def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int):
+def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int, year: str, total_invested: float):
     """
     Format jaaroverzicht and write to sheet.
 
@@ -182,6 +185,9 @@ def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int):
     :param ws: xlsxwriter Worksheet object.
     :param totals: Dataframe with totals overview.
     :param start_row: Integer to start writing at.
+    :param year: String with current year of writing.
+    :param total_invested: Float number of total investments.
+    :return total_invested: Float updated number of total investments.
     """
 
     format_winstverlies_font = wb.add_format(winstverlies_font)
@@ -194,7 +200,8 @@ def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int):
     ), ignore_index=False).transpose()
     totals_waarde.index = totals_waarde.index.str[:10]
     totals_waarde = totals_waarde[['Totaal portefeuille', 'Inleg', 'Winst/Verlies']].reset_index()
-    totals_waarde['Inleg'] = totals_waarde['Inleg'].cumsum()
+    totals_waarde['Inleg'] = totals_waarde['Inleg'].cumsum() + total_invested
+    total_invested = totals_waarde['Inleg'].iloc[-1]
     totals_waarde = totals_waarde.rename(columns={'Totaal portefeuille': 'Portefeuille'})
 
     for i in range(len(totals.columns) + 1):
@@ -212,16 +219,19 @@ def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int):
             else:
                 ws.write(start_row + i + 1, j, totals_waarde.iloc[i, j])
 
-    add_jaaroverzicht_plot(ws, totals_waarde, start_row)
+    add_jaaroverzicht_plot(ws, totals_waarde, start_row, year)
+
+    return total_invested
 
 
-def add_jaaroverzicht_plot(ws, totals_waarde, start_row):
+def add_jaaroverzicht_plot(ws, totals_waarde: pd.DataFrame, start_row: int, year: str):
     """
     Capture jaaroverzicht in image and write to Excel.
 
     :param ws: xlsxwriter Worksheet object.
     :param totals_waarde: Dataframe with totals info.
     :param start_row: Integer to start writing at.
+    :param year: String with current year of writing.
     """
 
     plt.plot(totals_waarde['Portefeuille'], color=header_color, label='Portefeuille')
@@ -231,43 +241,53 @@ def add_jaaroverzicht_plot(ws, totals_waarde, start_row):
     ax = plt.gca()
     ax.set_xticklabels(totals_waarde['index'])
     plt.xticks(rotation=45)
-    plt.title('Portefeuille ontwikkeling')
+    plt.title('Portefeuille ontwikkeling ' + year)
     plt.legend()
     plt.grid(True)
-    plt.savefig('portefeuille_ontwikkeling.png', bbox_inches='tight', dpi=100)
-    ws.insert_image(start_row + 2, 5, 'portefeuille_ontwikkeling.png')
+    plt.savefig('portefeuille_ontwikkeling_' + year + '.png', bbox_inches='tight', dpi=100)
+    ws.insert_image(start_row + 2, 5, 'portefeuille_ontwikkeling_' + year + '.png')
+    plt.close()
 
 
-def write_portefeuille(portefeuille: pd.DataFrame, totals: pd.DataFrame, winstverlies: pd.Series,
+def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_dict: dict,
                        output_path: str = 'results'):
     """
     Write portefeuille info to Excel.
 
-    :param portefeuille: DataFrame with portefeuille info.
-    :param totals: Dataframe with totals info.
-    :param winstverlies: Series with winstverlies.
+    :param portefeuille_dict: Dict with portefeuille info.
+    :param totals_dict: Dict with totals info.
+    :param winstverlies_dict: Dict with winstverlies.
     :param output_path: String where to write the output to.
     """
 
     writer = pd.ExcelWriter(os.path.join(output_path, 'portefeuille.xlsx'), engine='xlsxwriter')
     wb = writer.book
-    sheet_name = "Portefeuille"
-    ws = wb.add_worksheet(sheet_name)
-    writer.sheets[sheet_name] = ws
 
-    start_row = 1
-    portefeuille.reset_index(inplace=True)
-    portefeuille.drop('Symbool/ISIN', axis=1, inplace=True)
+    port_prev = None
+    total_invested = 0
+    for key in portefeuille_dict:
+        portefeuille = portefeuille_dict[key]
+        totals = totals_dict[key]
+        winstverlies = winstverlies_dict[key]
 
-    # format sheet
-    format_portefeuille(wb, ws, portefeuille, start_row)
-    start_row += len(portefeuille.index) + 2
-    format_totals(wb, ws, totals, start_row)
-    start_row += len(totals.index) + 1
-    format_winstverlies(wb, ws, winstverlies, start_row)
-    start_row += 4
-    format_jaaroverzicht(wb, ws, totals, start_row)
-    format_header(wb, ws, 2020)
-    set_cell_widths(ws, len(portefeuille.columns))
-    ws.freeze_panes(2, 1)
+        ws = wb.add_worksheet(key)
+        writer.sheets[key] = ws
+
+        start_row = 1
+
+        # format sheet
+        format_portefeuille(wb, ws, portefeuille, start_row, port_prev)
+        start_row += len(portefeuille.index) + 2
+        format_totals(wb, ws, totals, start_row)
+        start_row += len(totals.index) + 1
+        format_winstverlies(wb, ws, winstverlies, start_row)
+        start_row += 4
+        total_invested = format_jaaroverzicht(wb, ws, totals, start_row, key, total_invested)
+        format_header(wb, ws, key)
+        set_cell_widths(ws, len(portefeuille.columns))
+        ws.freeze_panes(2, 1)
+
+        port_prev = portefeuille
+
+    # save the file
     writer.save()

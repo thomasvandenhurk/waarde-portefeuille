@@ -137,4 +137,4 @@ dmypy.json
 /results/*.xlsx
 
 # figure
-portefeuille_ontwikkeling.png
+portefeuille_ontwikkeling_****.png
