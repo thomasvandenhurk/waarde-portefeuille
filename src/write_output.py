@@ -1,5 +1,4 @@
 import calendar
-import os
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -275,19 +274,17 @@ def add_jaaroverzicht_plot(ws, totals_waarde: pd.DataFrame, start_row: int, year
     plt.close()
 
 
-def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_dict: dict,
-                       output_path: str = 'results'):
+def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_dict: dict, wb, writer):
     """
     Write portefeuille info to Excel.
 
     :param portefeuille_dict: Dict with portefeuille info.
     :param totals_dict: Dict with totals info.
     :param winstverlies_dict: Dict with winstverlies.
-    :param output_path: String where to write the output to.
+    :param wb: xlsxwriter Workbook object.
+    :param writer: xlsxwriter Writer object.
+    :return writer: xlsxwriter Writer object.
     """
-
-    writer = pd.ExcelWriter(os.path.join(output_path, 'portefeuille.xlsx'), engine='xlsxwriter')
-    wb = writer.book
 
     port_prev = None
     total_invested = 0
@@ -296,7 +293,7 @@ def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_
         totals = totals_dict[key]
         winstverlies = winstverlies_dict[key]
 
-        ws = wb.add_worksheet(key)
+        ws = wb.get_worksheet_by_name(key)
         writer.sheets[key] = ws
 
         start_row = 1
@@ -321,5 +318,4 @@ def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_
 
         port_prev = portefeuille
 
-    # save the file
-    writer.save()
+    return writer
