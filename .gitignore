@@ -136,5 +136,8 @@ dmypy.json
 /data/deposits/Account.csv
 /results/*.xlsx
 
+# stocks ids
+portefeuille_dict.py
+
 # figure
 portefeuille_ontwikkeling_****.png
