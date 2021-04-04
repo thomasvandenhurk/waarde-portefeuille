@@ -1,8 +1,9 @@
 import json
 import os
-import requests
 
 import pandas as pd
+import requests
+from progressbar import progressbar
 
 
 def get_stock_get_detail(performance_id: str):
@@ -164,9 +165,8 @@ def create_stock_overview(writer: pd.ExcelWriter, stocks_dict: dict, portefeuill
 
     if all(key in stocks_dict for key in set(all_holdings)):
         res = []
-        for key, value in stocks_dict.items():
+        for key, value in progressbar(stocks_dict.items()):
             if key in set(all_holdings) and value is not None:
-                print(key)
                 # get all dict results
                 tmp = {'Holding': key}
                 tmp.update(get_stock_get_detail(value))
@@ -175,6 +175,7 @@ def create_stock_overview(writer: pd.ExcelWriter, stocks_dict: dict, portefeuill
                 tmp.update(get_stock_v2_get_realtime_data(value))
                 res.append(tmp)
 
+        # get dict to DF and write to Excel
         res = pd.DataFrame.from_dict(res)
         res.to_excel(writer, sheet_name, index=False)
     else:
@@ -187,4 +188,3 @@ def create_stock_overview(writer: pd.ExcelWriter, stocks_dict: dict, portefeuill
         ws.write(1, 0, 'Missing keys: ' + ", ".join(missings))
 
     return writer
-
