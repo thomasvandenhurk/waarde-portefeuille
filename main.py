@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def main(output_path='results'):
+def main(output_path='results', use_rapid_api=True):
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     logging.info('Start program')
     logging.info('Constructing portfolio from exports')
@@ -21,9 +21,10 @@ def main(output_path='results'):
     logging.info('Writing portfolio overview to Excel')
     writer = write_portefeuille(portefeuille_dict, totals_dict, winstverlies_dict, wb, writer)
 
-    # create stock overview
-    logging.info('Retrieve current portfolio holdings fundamentals')
-    writer = create_stock_overview(writer, stock_input, portefeuille_dict)
+    if use_rapid_api:
+        # create stock overview
+        logging.info('Retrieve current portfolio holdings fundamentals')
+        writer = create_stock_overview(writer, stock_input, portefeuille_dict)
 
     logging.info('Save Excel file to ' + output_path + ' folder')
     writer.save()
