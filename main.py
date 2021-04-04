@@ -14,7 +14,9 @@ def main(output_path='results'):
     for key in sorted(portefeuille_dict.keys(), reverse=True):
         wb.add_worksheet(key)  # newer years first
     writer = write_portefeuille(portefeuille_dict, totals_dict, winstverlies_dict, wb, writer)
-    writer = create_stock_overview(writer, stock_input)
+
+    # create stock overview
+    writer = create_stock_overview(writer, stock_input, portefeuille_dict)
     writer.save()
 
 

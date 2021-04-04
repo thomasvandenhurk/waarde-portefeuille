@@ -146,27 +146,45 @@ def get_stock_v2_get_realtime_data(performance_id: str):
     return res
 
 
-def create_stock_overview(writer: pd.ExcelWriter, stocks_dict: dict):
+def create_stock_overview(writer: pd.ExcelWriter, stocks_dict: dict, portefeuille_dict: dict):
     """
     Create sheet with stock overview with stock fundamentals.
 
     :param writer: ExcelWriter object to write the sheet to.
-    :param stocks_dict: Dict with the performanceIDs to retrieve information from
+    :param stocks_dict: Dict with the performanceIDs to retrieve information from.
+    :param portefeuille_dict: Dict with portefeuille.
     :return res: Dict with results.
     """
 
-    res = []
-    for key, value in stocks_dict.items():
-        print(key)
-        # get all dict results
-        tmp = get_stock_get_detail(value)
-        tmp.update(get_stock_v2_get_competitors(value))
-        tmp.update(get_stock_v2_get_key_stats(value))
-        tmp.update(get_stock_v2_get_realtime_data(value))
-        res.append(tmp)
+    sheet_name = 'Stock details'
 
-    res = pd.DataFrame.from_dict(res)
-    res.to_excel(writer, 'Stock details', index=False)
+    # get current holdings
+    last_year = portefeuille_dict[max(portefeuille_dict.keys())]
+    all_holdings = last_year[last_year.iloc[:, -3] > 0]['Product']
+
+    if all(key in stocks_dict for key in set(all_holdings)):
+        res = []
+        for key, value in stocks_dict.items():
+            if key in set(all_holdings) and value is not None:
+                print(key)
+                # get all dict results
+                tmp = {'Holding': key}
+                tmp.update(get_stock_get_detail(value))
+                tmp.update(get_stock_v2_get_competitors(value))
+                tmp.update(get_stock_v2_get_key_stats(value))
+                tmp.update(get_stock_v2_get_realtime_data(value))
+                res.append(tmp)
+
+        res = pd.DataFrame.from_dict(res)
+        res.to_excel(writer, sheet_name, index=False)
+    else:
+        # some stocks info is missing, print which
+        missings = [holding for holding in all_holdings if holding not in stocks_dict]
+
+        wb = writer.book
+        ws = wb.add_worksheet(sheet_name)
+        ws.write(0, 0, 'Stocks are missing, add performanceIDs in portefeuille_dict.py or set to None')
+        ws.write(1, 0, 'Missing keys: ' + ", ".join(missings))
 
     return writer
 
