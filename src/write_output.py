@@ -261,7 +261,10 @@ def add_jaaroverzicht_plot(ws, totals_waarde: pd.DataFrame, start_row: int, year
     ax.set_xticklabels(totals_waarde['index'])
     for p in ax.patches:
         if p.get_height() > 0:
-            ax.annotate(str(int(round(p.get_height(), 0))), (p.get_x() * 1.001, max(p.get_height() * 1.007, 20)))
+            ax.annotate(
+                str(int(round(p.get_height(), 0))),
+                (p.get_x() * (1 + 0.003*(12-totals_waarde.shape[0])), max(p.get_height() * 1.007, 20))
+            )
         else:
             ax.annotate('(' + str(int(round(abs(p.get_height()), 0))) + ')', (p.get_x() * 0.999, 20))
 
