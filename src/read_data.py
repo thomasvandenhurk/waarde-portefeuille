@@ -4,6 +4,27 @@ from os import listdir
 
 import pandas as pd
 
+from settings import rekeningoverzicht_filename
+
+
+def read_dividends() -> pd.DataFrame:
+    """
+    Read dividends file in folder data/deposits.
+
+    :return overview of dividends over time.
+    """
+    dividend = pd.read_csv(os.path.join('data', 'deposits', rekeningoverzicht_filename))
+    dividend = dividend.loc[
+        (dividend['Omschrijving'] == 'Dividend') | (dividend['Omschrijving'] == 'Dividendbelasting')
+        ].copy()
+    dividend = dividend.rename(columns={'Unnamed: 8': 'Dividend'})
+    dividend['Dividend'] = dividend['Dividend'].str.replace(',', '.').astype(float)
+    dividend['Datum'] = pd.to_datetime(dividend['Datum'], format='%d-%m-%Y')
+    dividend['Quarter'] = pd.PeriodIndex(dividend['Datum'], freq='Q')
+    dividend = dividend[['Quarter', 'Product', 'Dividend', 'Mutatie']]
+
+    return dividend
+
 
 def read_deposits() -> pd.DataFrame:
     """
@@ -12,7 +33,7 @@ def read_deposits() -> pd.DataFrame:
     :return overview of deposits over time.
     """
 
-    deposits = pd.read_csv(os.path.join('data', 'deposits', 'Account.csv'))
+    deposits = pd.read_csv(os.path.join('data', 'deposits', rekeningoverzicht_filename))
     deposits = deposits.loc[
         (deposits['Omschrijving'] == 'iDEAL Deposit') | (deposits['Omschrijving'] == 'iDEAL storting')
     ].copy()

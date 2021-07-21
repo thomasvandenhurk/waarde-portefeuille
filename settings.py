@@ -42,3 +42,5 @@ months_translation = {
     'November': 'November',
     'December': 'December'
 }
+
+rekeningoverzicht_filename = 'Account.csv'
