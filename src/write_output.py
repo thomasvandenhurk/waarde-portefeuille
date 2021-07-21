@@ -1,11 +1,13 @@
 import calendar
 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from src.read_data import read_dividends
 from settings import header_r, header_l, port_header, port_header_border, aantal_pos, aantal_neg, aantal_neutral, \
     waarde, procent_pos, procent_neg, procent_neutral, totaal_font, totaal_num, winstverlies_font, winstverlies_num, \
-    jaaroverzicht_font, jaaroverzicht_num, header_color, positive_color, months_translation
+    jaaroverzicht_font, jaaroverzicht_num, header_color, positive_color, months_translation, rekeningoverzicht_filename
 
 
 def format_header(wb, ws, year: int):
@@ -320,5 +322,63 @@ def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_
         ws.freeze_panes(2, 1)
 
         port_prev = portefeuille
+
+    return writer
+
+
+def plot_total_dividend(totals: pd.DataFrame):
+    """
+    Create a stacked barplot with quartely dividends.
+
+    :param writer: Exelwriter object.
+    :param wb: Excelwriter workbook.
+    :return overview of deposits over time.
+    """
+
+    x = np.arange(0, len(totals))
+    fig, ax = plt.subplots()
+
+    # TODO make this dynamic
+    incr = [-0.2, 0.2]
+    color = ['#1D2F6F', '#FAC748', '#6EAF46', '#8390FA']
+    i = 0
+    for col in totals.columns:
+        plt.bar(x+incr[i], totals[col], width=0.3, color=color[i])
+        i += 1
+
+    # remove spines
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+
+    # x y details
+    plt.ylabel('Dividend')
+    plt.xticks(x, totals.index)
+
+    plt.title('Dividend overview')
+    plt.legend(totals.columns, loc='upper left')
+    plt.savefig('dividend_ontwikkeling.png', bbox_inches='tight', dpi=100)
+    plt.close()
+
+
+def write_dividend_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
+    """
+    Write dividend overview to separate sheets. This creates a table and a stacked barplot.
+
+    :param writer: Exelwriter object.
+    :param wb: Excelwriter workbook.
+    :return overview of deposits over time.
+    """
+    sheet_name = 'Dividends'
+
+    # read dividends
+    dividends = read_dividends()
+
+    # get totals
+    total_overview = dividends.groupby(['Quarter', 'Mutatie']).sum(['Dividend']).reset_index()
+    wide_totals = total_overview.pivot(index='Quarter', columns='Mutatie')
+    plot_total_dividend(wide_totals)
+    wide_totals.to_excel(writer, sheet_name=sheet_name)
+    ws = wb.get_worksheet_by_name(sheet_name)
+    ws.insert_image(2, 5, 'dividend_ontwikkeling.png')
 
     return writer
