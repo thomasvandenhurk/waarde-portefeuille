@@ -338,10 +338,13 @@ def plot_total_dividend(totals: pd.DataFrame):
     x = np.arange(0, len(totals))
     fig, ax = plt.subplots()
 
-    # TODO make this dynamic
-    incr = [-0.2, 0.2]
+    incr = list(np.linspace(start=-0.2, stop=0.2, num=len(totals.columns)))
     color = ['#1D2F6F', '#FAC748', '#6EAF46', '#8390FA']
     i = 0
+
+    if len(totals.columns):
+        NotImplementedError('More than four different currencies dividend is currently not supported.')
+
     for col in totals.columns:
         plt.bar(x+incr[i], totals[col], width=0.3, color=color[i])
         i += 1
