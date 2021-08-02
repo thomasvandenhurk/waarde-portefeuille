@@ -49,6 +49,10 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
     :param port_prev: Dataframe with portefeuille data from previous year.
     """
 
+    # make vrije ruimte first entry
+    df['Product'] = df['Product'].str.replace('CASH', 'AAACASH')
+    df.sort_values('Product', inplace=True)
+    df['Product'] = df['Product'].str.replace('AAACASH', 'CASH')
     df.drop('Symbool/ISIN', axis=1, inplace=True)
 
     keeps = (df.drop('Product', axis=1) != 0).any(axis=1)
@@ -81,30 +85,33 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
     format_procent_neg = wb.add_format(procent_neg)
     format_procent_neutral = wb.add_format(procent_neutral)
 
+    # count number of rows with cash positions (need different style below)
+    rows_cash_position = df['Product'].str.contains('CASH') - 1
+
     for i in range(len(df.index)):
         for j in range(len(df.columns)):
             # writing aantallen
             if 'aantal' in df.columns[j]:
                 if j > 2:
                     # we can determine the aantal coloring based on previous entry
-                    if df.iloc[i, j] > df.iloc[i, j - 3] and i > 0:
+                    if df.iloc[i, j] > df.iloc[i, j - 3] and i > rows_cash_position:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_pos)
-                    elif df.iloc[i, j] < df.iloc[i, j - 3] and i > 0:
+                    elif df.iloc[i, j] < df.iloc[i, j - 3] and i > rows_cash_position:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neg)
-                    elif i > 0:
+                    elif i > rows_cash_position:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neutral)
                     else:
                         ws.write(start_row + i + 1, j, '', format_aantal_neutral)
-                elif i > 0 and port_prev is None:
+                elif i > rows_cash_position and port_prev is None:
                     # first entry of the year and there is not previous data
                     ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neutral)
-                elif i > 0:
+                elif i > rows_cash_position:
                     # first entry of the year but we have a previous year
-                    if df.iloc[i, j] > port_prev[i] and i > 0:
+                    if df.iloc[i, j] > port_prev[i] and i > rows_cash_position:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_pos)
-                    elif df.iloc[i, j] < port_prev[i] and i > 0:
+                    elif df.iloc[i, j] < port_prev[i] and i > rows_cash_position:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neg)
-                    elif i > 0:
+                    elif i > rows_cash_position:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_aantal_neutral)
                     else:
                         ws.write(start_row + i + 1, j, '', format_aantal_neutral)
@@ -112,7 +119,7 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
             elif 'waarde' in df.columns[j]:
                 ws.write(start_row + i + 1, j, df.iloc[i, j], format_waarde)
             elif 'procent' in df.columns[j]:
-                if i > 0:
+                if i > rows_cash_position:
                     if df.iloc[i, j] > 0:
                         ws.write(start_row + i + 1, j, df.iloc[i, j], format_procent_pos)
                     elif df.iloc[i, j] < 0:
