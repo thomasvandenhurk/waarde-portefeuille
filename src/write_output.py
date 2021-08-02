@@ -376,9 +376,13 @@ def write_dividend_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
     # get totals
     total_overview = dividends.groupby(['Quarter', 'Mutatie']).sum(['Dividend']).reset_index()
     wide_totals = total_overview.pivot(index='Quarter', columns='Mutatie')
+    wide_totals.columns = [col[-1] for col in wide_totals.columns.values]
     plot_total_dividend(wide_totals)
-    wide_totals.to_excel(writer, sheet_name=sheet_name)
+    wide_totals['Total'] = wide_totals.sum(axis=1)
+    wide_totals = wide_totals.reset_index()
+    wide_totals.to_excel(writer, sheet_name=sheet_name, index=False)
     ws = wb.get_worksheet_by_name(sheet_name)
-    ws.insert_image(2, 5, 'dividend_ontwikkeling.png')
+    ws.insert_image(1, len(wide_totals.columns)+2, 'dividend_ontwikkeling.png')
+    ws.set_column(0, len(wide_totals.columns)-1, 10)
 
     return writer
