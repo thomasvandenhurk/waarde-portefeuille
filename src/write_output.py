@@ -86,7 +86,7 @@ def format_portefeuille(wb, ws, df: pd.DataFrame, start_row: int, port_prev: pd.
     format_procent_neutral = wb.add_format(procent_neutral)
 
     # count number of rows with cash positions (need different style below)
-    rows_cash_position = df['Product'].str.contains('CASH') - 1
+    rows_cash_position = df['Product'].str.contains('CASH').sum() - 1
 
     for i in range(len(df.index)):
         for j in range(len(df.columns)):
