@@ -7,6 +7,25 @@ import pandas as pd
 from settings import rekeningoverzicht_filename
 
 
+def read_costs() -> pd.DataFrame:
+    """
+    Read costs file in folder data/deposits.
+
+    :return overview of costs over time.
+    """
+    costs = pd.read_csv(os.path.join('data', 'deposits', rekeningoverzicht_filename))
+    costs = costs[costs['Omschrijving'].str.contains('kosten').fillna(False)].copy()
+    costs = costs.rename(columns={'Unnamed: 8': 'Kosten'})
+    costs['Kosten'] = costs['Kosten'].str.replace(',', '.').astype(float)
+    # change omschrijving
+    costs['Omschrijving'] = costs['Omschrijving'].str.replace('DEGIRO transactiekosten', 'Transactiekosten')
+    costs['Omschrijving'] = costs['Omschrijving'].str.replace('.*Aansluitingskosten.*', 'Aansluitingskosten')
+    costs['Jaar'] = pd.DatetimeIndex(pd.to_datetime(costs['Datum'], format='%d-%m-%Y')).year
+    costs = costs[['Jaar', 'Omschrijving', 'Kosten']]
+
+    return costs
+
+
 def read_dividends() -> pd.DataFrame:
     """
     Read dividends file in folder data/deposits.
