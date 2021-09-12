@@ -2,7 +2,7 @@ import logging
 
 from src.construct_portefeuille import construct_portefeuille
 from src.rapidapi_data import *
-from src.write_output import write_portefeuille, write_dividend_overview
+from src.write_output import write_portefeuille, write_dividend_overview, write_costs_overview
 from portefeuille_dict import stock_input
 from dotenv import load_dotenv
 load_dotenv()
@@ -31,6 +31,10 @@ def main(output_path='results', use_rapid_api=True):
     # add dividend overview
     logging.info('Writing dividend overview to Excel')
     writer = write_dividend_overview(writer, wb)
+
+    # add costs overview
+    logging.info('Writing costs overview to Excel')
+    writer = write_costs_overview(writer, wb)
 
     logging.info('Save Excel file to ' + output_path + ' folder')
     writer.save()

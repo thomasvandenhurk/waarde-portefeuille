@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from src.read_data import read_dividends
+from src.read_data import read_dividends, read_costs
 from settings import header_r, header_l, port_header, port_header_border, aantal_pos, aantal_neg, aantal_neutral, \
     waarde, procent_pos, procent_neg, procent_neutral, totaal_font, totaal_num, winstverlies_font, winstverlies_num, \
     jaaroverzicht_font, jaaroverzicht_num, header_color, positive_color, months_translation, rekeningoverzicht_filename
@@ -394,5 +394,32 @@ def write_dividend_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
     ws = wb.get_worksheet_by_name(sheet_name)
     ws.insert_image(1, len(wide_totals.columns)+2, 'dividend_ontwikkeling.png')
     ws.set_column(0, len(wide_totals.columns)-1, 10)
+
+    return writer
+
+
+def write_costs_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
+    """
+    Write cost overview to separate sheet. This creates a table.
+
+    :param writer: Exelwriter object.
+    :param wb: Excelwriter workbook.
+    :return overview of costs over time.
+    """
+    sheet_name = 'Costs'
+
+    # read dividends
+    costs = read_costs()
+
+    # get totals
+    total_overview = costs.groupby(['Jaar', 'Omschrijving']).sum(['Kosten']).reset_index()
+    total_overview['Kosten'] = abs(total_overview['Kosten'])
+    wide_totals = total_overview.pivot(index='Jaar', columns='Omschrijving')
+    wide_totals.columns = [col[-1] for col in wide_totals.columns.values]
+    wide_totals['Total'] = wide_totals.sum(axis=1)
+    wide_totals = wide_totals.reset_index()
+    wide_totals.to_excel(writer, sheet_name=sheet_name, index=False)
+    ws = wb.get_worksheet_by_name(sheet_name)
+    ws.set_column(1, len(wide_totals.columns) - 1, 20)
 
     return writer
