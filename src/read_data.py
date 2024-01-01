@@ -16,7 +16,7 @@ def read_costs() -> pd.DataFrame:
     costs = pd.read_csv(os.path.join('data', 'deposits', rekeningoverzicht_filename))
     costs = costs[costs['Omschrijving'].str.contains('kosten').fillna(False)].copy()
     costs = costs.rename(columns={'Unnamed: 8': 'Kosten'})
-    costs['Kosten'] = costs['Kosten'].str.replace(',', '.').astype(float)
+    #costs['Kosten'] = costs['Kosten'].str.replace(',', '.').astype(float)
     # change omschrijving
     costs['Omschrijving'] = costs['Omschrijving'].str.replace('DEGIRO transactiekosten', 'Transactiekosten')
     costs['Omschrijving'] = costs['Omschrijving'].str.replace('.*Aansluitingskosten.*', 'Aansluitingskosten')
@@ -37,7 +37,7 @@ def read_dividends() -> pd.DataFrame:
         (dividend['Omschrijving'] == 'Dividend') | (dividend['Omschrijving'] == 'Dividendbelasting')
         ].copy()
     dividend = dividend.rename(columns={'Unnamed: 8': 'Dividend'})
-    dividend['Dividend'] = dividend['Dividend'].str.replace(',', '.').astype(float)
+    #dividend['Dividend'] = dividend['Dividend'].str.replace(',', '.').astype(float)
     dividend['Datum'] = pd.to_datetime(dividend['Datum'], format='%d-%m-%Y')
     dividend['Quarter'] = pd.PeriodIndex(dividend['Datum'], freq='Q')
     dividend = dividend[['Quarter', 'Product', 'Dividend', 'Mutatie']]
@@ -54,11 +54,13 @@ def read_deposits() -> pd.DataFrame:
 
     deposits = pd.read_csv(os.path.join('data', 'deposits', rekeningoverzicht_filename))
     deposits = deposits.loc[
-        (deposits['Omschrijving'] == 'iDEAL Deposit') | (deposits['Omschrijving'] == 'iDEAL storting')
+        (deposits['Omschrijving'] == 'iDEAL Deposit') |
+        (deposits['Omschrijving'] == 'iDEAL storting') |
+        (deposits['Omschrijving'] == 'flatex terugstorting')
     ].copy()
     deposits = deposits.rename(columns={'Unnamed: 8': 'Storting'})
     deposits = deposits[['Datum', 'Storting']]
-    deposits['Storting'] = deposits['Storting'].str.replace(',', '.').astype(float)
+    #deposits['Storting'] = deposits['Storting'].str.replace(',', '.').astype(float)
     deposits['Datum'] = pd.to_datetime(deposits['Datum'], format='%d-%m-%Y')
 
     return deposits

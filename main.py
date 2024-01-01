@@ -3,12 +3,12 @@ import logging
 from src.construct_portefeuille import construct_portefeuille
 from src.rapidapi_data import *
 from src.write_output import write_portefeuille, write_dividend_overview, write_costs_overview
-from portefeuille_dict import stock_input
+#from portefeuille_dict import stock_input
 from dotenv import load_dotenv
 load_dotenv()
 
 
-def main(output_path='results', use_rapid_api=True):
+def main(output_path='results', use_rapid_api=False):
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     logging.info('Start program')
     logging.info('Constructing portfolio from exports')
