@@ -1,4 +1,5 @@
 import calendar
+from datetime import datetime as dt
 
 import numpy as np
 import pandas as pd
@@ -421,5 +422,55 @@ def write_costs_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
     wide_totals.to_excel(writer, sheet_name=sheet_name, index=False)
     ws = wb.get_worksheet_by_name(sheet_name)
     ws.set_column(1, len(wide_totals.columns) - 1, 20)
+
+    return writer
+
+
+def write_returns_overview(totals_dict: dict, writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
+    """
+    Write yearly returns overview to separate sheet. This creates a table. The yearly return is calculated by
+    calculating a weighted 'inleg' (perc of the year the money could generate) returns multiplied by the amount.
+
+    :param totals_dict: dictionary with totals per year to calculate returns.
+    :param writer: Exelwriter object.
+    :param wb: Excelwriter workbook.
+    :return overview of costs over time.
+    """
+
+    sheet_name = 'Yearly returns'
+
+    returns_overview = pd.DataFrame()
+    for key, value in totals_dict.items():
+        if key == list(totals_dict.keys())[-1]:
+            # last year (not complete) so pass
+            continue
+
+        year = int(key)
+
+        df_waarde = value[[x for x in value.columns if '(waarde)' in x]]
+        df_waarde.columns = [x.replace(' (waarde)', '') for x in df_waarde.columns]
+        value_start = round(df_waarde.loc['Totaal portefeuille'][0], 2) if key != list(totals_dict.keys())[0] else 0
+        value_end = round(df_waarde.loc['Totaal portefeuille'][-1], 2)
+        total_returns = value_end-value_start-df_waarde.loc['Inleg'].sum()
+
+        # for weight deposit, we count the inleg * the percentage of the year that that amount could generate returns
+        # the amount at the start of the year will be fully accounted for (i.e. weight 1)
+        weighted_deposit = round(df_waarde.loc['Totaal portefeuille'][0], 2)
+        ny = pd.to_datetime(str(year+1))
+        for col in df_waarde.columns:
+            perc_year = (ny-pd.to_datetime(col)).days/(365+calendar.isleap(year))
+            weighted_deposit += perc_year*df_waarde[col]['Inleg']
+
+        returns_overview = returns_overview.append(pd.DataFrame(data={
+            'Jaar': [year],
+            'Start bedrag': [value_start],
+            'Eind bedrag': [value_end],
+            'Winst/verlies': [total_returns],
+            'Gewogen rendement': [round(100*(total_returns/weighted_deposit), 2)]
+        }))
+
+    returns_overview.to_excel(writer, sheet_name=sheet_name, index=False)
+    ws = wb.get_worksheet_by_name(sheet_name)
+    ws.set_column(1, len(returns_overview.columns) - 1, 20)
 
     return writer
