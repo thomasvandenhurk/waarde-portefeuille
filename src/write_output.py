@@ -427,6 +427,16 @@ def write_costs_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
 
 
 def write_returns_overview(totals_dict: dict, writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
+    """
+    Write yearly returns overview to separate sheet. This creates a table. The yearly return is calculated by
+    calculating a weighted 'inleg' (perc of the year the money could generate) returns multiplied by the amount.
+
+    :param totals_dict: dictionary with totals per year to calculate returns.
+    :param writer: Exelwriter object.
+    :param wb: Excelwriter workbook.
+    :return overview of costs over time.
+    """
+
     sheet_name = 'Yearly returns'
 
     returns_overview = pd.DataFrame()
