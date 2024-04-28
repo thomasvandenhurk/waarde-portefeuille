@@ -360,6 +360,7 @@ def plot_total_dividend(totals: pd.DataFrame):
     # remove spines
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
+    ax.tick_params(axis='x', labelrotation=90)
 
     # x y details
     plt.ylabel('Dividend')
@@ -373,7 +374,7 @@ def plot_total_dividend(totals: pd.DataFrame):
 
 def write_dividend_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
     """
-    Write dividend overview to separate sheets. This creates a table and a stacked barplot.
+    Write dividend overview to separate sheets. This creates two tables and a stacked barplot.
 
     :param writer: Exelwriter object.
     :param wb: Excelwriter workbook.
@@ -389,12 +390,25 @@ def write_dividend_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
     wide_totals = total_overview.pivot(index='Quarter', columns='Mutatie')
     wide_totals.columns = [col[-1] for col in wide_totals.columns.values]
     plot_total_dividend(wide_totals)
-    wide_totals['Total'] = wide_totals.sum(axis=1)
+    wide_totals['zzzTotal'] = wide_totals.sum(axis=1)  # zzz added for sorting later
     wide_totals = wide_totals.reset_index()
-    wide_totals.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    # agg to year view
+    wide_totals['Year'] = wide_totals['Quarter'].astype(str).str[:4].astype(int)
+    wide_totals['Quarter'] = wide_totals['Quarter'].astype(str).str[4:]
+    year_view = wide_totals.pivot(index='Year', columns='Quarter', values=list(wide_totals.columns[~wide_totals.columns.isin(['Year', 'Quarter'])]))
+    year_view = year_view.swaplevel(axis=1).sort_index(axis=1)
+    year_view['FY', 'Total'] = list(wide_totals.groupby('Year')['zzzTotal'].sum())
+    year_view = year_view.rename(columns={'zzzTotal': 'Total'})
+    year_view.to_excel(writer, sheet_name=sheet_name)
+
+    div_per_company = dividends.groupby('Product')['Dividend'].sum().sort_values(ascending=False)
+    div_per_company.to_excel(writer, startrow=len(year_view)+6, sheet_name=sheet_name)
+
     ws = wb.get_worksheet_by_name(sheet_name)
-    ws.insert_image(1, len(wide_totals.columns)+2, 'dividend_ontwikkeling.png')
-    ws.set_column(0, len(wide_totals.columns)-1, 10)
+    ws.insert_image(len(year_view)+6, 5, 'dividend_ontwikkeling.png')
+    ws.set_column(0, 0, 30)
+    ws.set_column(1, len(year_view.columns), 10)
 
     return writer
 
