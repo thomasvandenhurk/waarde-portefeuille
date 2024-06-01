@@ -89,8 +89,19 @@ def read_portefeuille(path_to_portefeuille_dir: str = os.path.join('data', 'expo
         data_month = data_month.rename(columns={'Aantal': date + ' (aantal)', 'Waarde in EUR': date + ' (waarde)'})
         portefeuille.append(data_month)
 
+    # get newest name on ISIN code
+    product_isin = pd.concat(portefeuille)
+    product_isin = product_isin[product_isin['Symbool/ISIN'].notnull()][['Product', 'Symbool/ISIN']]
+    product_isin = product_isin.drop_duplicates(subset='Symbool/ISIN', keep='last')
+
+    portefeuille_updated = []
+    for port in portefeuille:
+        merged_df = port.merge(product_isin, on='Symbool/ISIN', how='left', suffixes=('', '_new'))
+        port['Product'] = merged_df['Product_new'].combine_first(merged_df['Product'])
+        portefeuille_updated.append(port)
+
     # merge all files and set nan to zero
-    portefeuille = reduce(lambda x, y: pd.merge(x, y, on=['Product', 'Symbool/ISIN'], how='outer'), portefeuille)
+    portefeuille = reduce(lambda x, y: pd.merge(x, y, on=['Product', 'Symbool/ISIN'], how='outer'), portefeuille_updated)
     portefeuille = portefeuille.replace('CASH & CASH FUND & FTX CASH(EUR)', 'VRIJE RUIMTE')
     portefeuille.set_index(['Product', 'Symbool/ISIN'], inplace=True)
     portefeuille = portefeuille.fillna(0)
