@@ -206,7 +206,7 @@ def format_winstverlies(wb, ws, winstverlies: pd.DataFrame, start_row: int):
                 ws.write(start_row + 1, i + 1, "", format_winstverlies_num)
 
 
-def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int, year: str, total_invested: float):
+def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int, year: str, total_invested: float, total_waarde_full: list):
     """
     Format jaaroverzicht and write to sheet.
 
@@ -250,7 +250,9 @@ def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int, year: str
 
     add_jaaroverzicht_plot(ws, totals_waarde, start_row, year)
 
-    return total_invested
+    total_waarde_full.append(totals_waarde)  # pass to overview over the years
+
+    return total_invested, total_waarde_full
 
 
 def add_jaaroverzicht_plot(ws, totals_waarde: pd.DataFrame, start_row: int, year: str):
@@ -282,8 +284,13 @@ def add_jaaroverzicht_plot(ws, totals_waarde: pd.DataFrame, start_row: int, year
     plt.title('Portefeuille ontwikkeling ' + year)
     plt.legend()
     plt.grid(True)
+
+    if year == '':
+        figure = plt.gcf()  # get current figure
+        figure.set_size_inches(len(totals_waarde)/3, 6)
+
     plt.savefig('portefeuille_ontwikkeling_' + year + '.png', bbox_inches='tight', dpi=100)
-    ws.insert_image(start_row + 2, 5, 'portefeuille_ontwikkeling_' + year + '.png')
+    ws.insert_image(start_row + 2, 5 if year != '' else 1, 'portefeuille_ontwikkeling_' + year + '.png')
     plt.close()
 
 
@@ -301,6 +308,7 @@ def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_
 
     port_prev = None
     total_invested = 0
+    totals_waarde_full = []
     for key in portefeuille_dict:
         portefeuille = portefeuille_dict[key]
         totals = totals_dict[key]
@@ -324,14 +332,14 @@ def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_
         start_row += 4
 
         # format jaaroverzicht. keep the total invest amount to take to the next year total inleg
-        total_invested = format_jaaroverzicht(wb, ws, totals, start_row, key, total_invested)
+        total_invested, totals_waarde_full = format_jaaroverzicht(wb, ws, totals, start_row, key, total_invested, totals_waarde_full)
         format_header(wb, ws, key)
         set_cell_widths(ws, len(portefeuille.columns))
         ws.freeze_panes(2, 1)
 
         port_prev = portefeuille
 
-    return writer
+    return writer, totals_waarde_full
 
 
 def plot_total_dividend(totals: pd.DataFrame):
@@ -440,12 +448,13 @@ def write_costs_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
     return writer
 
 
-def write_returns_overview(totals_dict: dict, writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
+def write_returns_overview(totals_dict: dict, totals_waarde_full: list, writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
     """
     Write yearly returns overview to separate sheet. This creates a table. The yearly return is calculated by
     calculating a weighted 'inleg' (perc of the year the money could generate) returns multiplied by the amount.
 
     :param totals_dict: dictionary with totals per year to calculate returns.
+    :param totals_waarde_full: list with portfolio value over time.
     :param writer: Exelwriter object.
     :param wb: Excelwriter workbook.
     :return overview of costs over time.
@@ -483,8 +492,12 @@ def write_returns_overview(totals_dict: dict, writer: pd.ExcelWriter, wb) -> pd.
             'Gewogen rendement': [round(100*(total_returns/weighted_deposit), 2)]
         }))
 
+    returns_overview['Winst/verliest (cumulatief)'] = returns_overview['Winst/verlies'].cumsum()
     returns_overview.to_excel(writer, sheet_name=sheet_name, index=False)
     ws = wb.get_worksheet_by_name(sheet_name)
-    ws.set_column(1, len(returns_overview.columns) - 1, 20)
+    ws.set_column(1, len(returns_overview.columns), 20)
+
+    totals_waarde_full = pd.concat(totals_waarde_full).reset_index(drop=True)
+    add_jaaroverzicht_plot(ws, totals_waarde_full, start_row=len(returns_overview)+3, year='')
 
     return writer

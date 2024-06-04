@@ -21,7 +21,7 @@ def main(output_path='results', use_rapid_api=False):
     for key in sorted(portefeuille_dict.keys(), reverse=True):
         wb.add_worksheet(key)  # newer years first
     logging.info('Writing portfolio overview to Excel')
-    writer = write_portefeuille(portefeuille_dict, totals_dict, winstverlies_dict, wb, writer)
+    writer, totals_waarde_full = write_portefeuille(portefeuille_dict, totals_dict, winstverlies_dict, wb, writer)
 
     if use_rapid_api:
         # create stock overview
@@ -38,7 +38,7 @@ def main(output_path='results', use_rapid_api=False):
 
     # add yearly returns overview
     logging.info('Writing yearly returns overview to Excel')
-    writer = write_returns_overview(totals_dict, writer, wb)
+    writer = write_returns_overview(totals_dict, totals_waarde_full, writer, wb)
 
     logging.info('Save Excel file to ' + output_path + ' folder')
     writer.save()
