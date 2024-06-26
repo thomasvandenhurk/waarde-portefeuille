@@ -3,6 +3,7 @@ import logging
 from src.construct_portefeuille import construct_portefeuille
 from src.rapidapi_data import *
 from src.write_output import write_portefeuille, write_dividend_overview, write_costs_overview, write_returns_overview
+from src.degiro_exports import update_exports_degiro
 #from portefeuille_dict import stock_input
 from dotenv import load_dotenv
 load_dotenv()
@@ -11,12 +12,15 @@ load_dotenv()
 def main(output_path='results', use_rapid_api=False):
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     logging.info('Start program')
+    update_exports_degiro()
+
     logging.info('Constructing portfolio from exports')
     portefeuille_dict, totals_dict, winstverlies_dict = construct_portefeuille()
 
     writer = pd.ExcelWriter(os.path.join(output_path, 'portefeuille.xlsx'), engine='xlsxwriter')
     wb = writer.book
 
+    # update files
     # add portefeuille overview per year
     for key in sorted(portefeuille_dict.keys(), reverse=True):
         wb.add_worksheet(key)  # newer years first
