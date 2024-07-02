@@ -90,6 +90,6 @@ def update_exports_degiro():
         )
         make_export(
             page=page,
-            export_link=f"https://trader.degiro.nl/portfolio-reports/secure/v3/cashAccountReport/csv?intAccount=1218922&sessionId={session_id}&country=NL&lang=nl&fromDate=27%2F05%2F1990&toDate={date.day}%2F{date.month:02}%2F{date.year}",
+            export_link=f"https://trader.degiro.nl/portfolio-reports/secure/v3/cashAccountReport/csv?intAccount=1218922&sessionId={session_id}&country=NL&lang=nl&fromDate=27%2F05%2F1990&toDate={date.day:02}%2F{date.month:02}%2F{date.year}",
             output_path=os.path.join(os.getcwd(), 'data', 'deposits', 'Account.csv')
         )
