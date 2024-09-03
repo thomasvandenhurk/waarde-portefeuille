@@ -4,6 +4,7 @@ from src.construct_portefeuille import construct_portefeuille
 from src.rapidapi_data import *
 from src.write_output import write_portefeuille, write_dividend_overview, write_costs_overview, write_returns_overview
 from src.degiro_exports import update_exports_degiro
+from src.copy_excel_to_gsheet import copy_to_gsheet
 #from portefeuille_dict import stock_input
 from dotenv import load_dotenv
 load_dotenv()
@@ -17,7 +18,8 @@ def main(output_path='results', use_rapid_api=False):
     logging.info('Constructing portfolio from exports')
     portefeuille_dict, totals_dict, winstverlies_dict = construct_portefeuille()
 
-    writer = pd.ExcelWriter(os.path.join(output_path, 'portefeuille.xlsx'), engine='xlsxwriter')
+    excel_output = os.path.join(output_path, 'portefeuille.xlsx')
+    writer = pd.ExcelWriter(excel_output, engine='xlsxwriter')
     wb = writer.book
 
     # update files
@@ -46,6 +48,11 @@ def main(output_path='results', use_rapid_api=False):
 
     logging.info('Save Excel file to ' + output_path + ' folder')
     writer.save()
+
+    if os.path.exists('keyfile.json'):
+        logging.info('copy output to gsheet')
+        copy_to_gsheet(excel_output, folder_id='1L8NuwR2LY3Z6FQaNA98iQ17CFRGi_2vD')
+
     logging.info('Finished!')
 
 
