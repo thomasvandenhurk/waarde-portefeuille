@@ -16,7 +16,7 @@ def login_degiro(p):
     page.goto("https://trader.degiro.nl/login")
 
     try:
-        page.click('button:has-text("Alle cookies toestaan")')
+        page.click('button:has-text("Alles accepteren")')
     except:
         print("No cookies button found or clicked automatically by the website.")
 
