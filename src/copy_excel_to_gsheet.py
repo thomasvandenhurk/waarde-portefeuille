@@ -4,6 +4,13 @@ from googleapiclient.http import MediaFileUpload
 
 
 def copy_to_gsheet(excel_output, folder_id):
+    """
+    Copy file from excel_output path to a folder in Google Drive. If the file already exists, it will be overwritten.
+
+    :param excel_output: String with path to where excel file is stored.
+    :param folder_id: Id from Google drive folder to where the file needs to be stored.
+    """
+
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
