@@ -16,18 +16,24 @@ def main(output_path='results', use_rapid_api=False):
     update_exports_degiro()
 
     logging.info('Constructing portfolio from exports')
-    portefeuille_dict, totals_dict, winstverlies_dict = construct_portefeuille()
+    portefeuille_dict, totals_dict, winstverlies_dict, deposits = construct_portefeuille()
 
     excel_output = os.path.join(output_path, 'portefeuille.xlsx')
     writer = pd.ExcelWriter(excel_output, engine='xlsxwriter')
     wb = writer.book
 
     # update files
+    # TODO update benchmark file
+    benchmark = pd.read_csv(os.path.join('data', 'benchmark', 'benchmarks.csv'))
+    benchmark['date'] = pd.to_datetime(benchmark['date'])
+
     # add portefeuille overview per year
     for key in sorted(portefeuille_dict.keys(), reverse=True):
         wb.add_worksheet(key)  # newer years first
     logging.info('Writing portfolio overview to Excel')
-    writer, totals_waarde_full = write_portefeuille(portefeuille_dict, totals_dict, winstverlies_dict, wb, writer)
+    writer, totals_waarde_full = write_portefeuille(
+        portefeuille_dict, totals_dict, winstverlies_dict, deposits, benchmark, wb, writer
+    )
 
     if use_rapid_api:
         # create stock overview
@@ -44,7 +50,7 @@ def main(output_path='results', use_rapid_api=False):
 
     # add yearly returns overview
     logging.info('Writing yearly returns overview to Excel')
-    writer = write_returns_overview(totals_dict, totals_waarde_full, writer, wb)
+    writer = write_returns_overview(totals_dict, totals_waarde_full, deposits, benchmark, writer, wb)
 
     logging.info('Save Excel file to ' + output_path + ' folder')
     writer.save()

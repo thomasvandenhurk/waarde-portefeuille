@@ -36,7 +36,7 @@ def add_percentages(portefeuille: pd.DataFrame) -> pd.DataFrame:
     return portefeuille
 
 
-def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.DataFrame:
+def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Create total overview of portefeuille. The following information is created:
         - Totaal portefeuille
@@ -92,7 +92,7 @@ def calculate_totals(portefeuille: pd.DataFrame, deposits: pd.DataFrame) -> pd.D
                           columns=portefeuille.columns,
                           index=['Totaal portefeuille', 'Verschil t.o.v. vorige maand', 'Inleg'])
 
-    return totals
+    return totals, deposits
 
 
 def calculate_winstverlies(totals):
@@ -140,7 +140,7 @@ def split_per_year(portefeuille: pd.DataFrame, totals: pd.DataFrame, winstverlie
     return portefeuille_dict, totals_dict, winstverlies_dict
 
 
-def construct_portefeuille() -> Tuple[dict, dict, dict]:
+def construct_portefeuille() -> Tuple[dict, dict, dict, pd.DataFrame]:
     """
     Wrapper to construct portefeuille data. The portefeuille data is collected and a total overview is generated.
     Finally, the data is gathered in a dict per year.
@@ -148,16 +148,17 @@ def construct_portefeuille() -> Tuple[dict, dict, dict]:
     :return portefeuille_dict: Dict with percentage data appended per year.
     :return totals_dict: Dict with the respective totals per year.
     :return winstverlies_dict: Dict with the respective winstverlies per year.
+    :return deposits: Dataframe with all deposits made.
     """
 
     portefeuille = read_portefeuille()
     portefeuille = add_percentages(portefeuille=portefeuille)
     deposits = read_deposits()
-    totals = calculate_totals(portefeuille=portefeuille, deposits=deposits)
+    totals, deposits = calculate_totals(portefeuille=portefeuille, deposits=deposits)
     winstverlies = calculate_winstverlies(totals=totals)
     portefeuille.reset_index(inplace=True)
 
     # split data per year
     portefeuille_dict, totals_dict, winstverlies_dict = split_per_year(portefeuille, totals, winstverlies)
 
-    return portefeuille_dict, totals_dict, winstverlies_dict
+    return portefeuille_dict, totals_dict, winstverlies_dict, deposits
