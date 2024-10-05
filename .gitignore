@@ -135,6 +135,7 @@ dmypy.json
 /data/exports/*.csv
 /data/deposits/Account.csv
 /results/*.xlsx
+/data/benchmark/*.csv
 
 # stocks ids
 portefeuille_dict.py

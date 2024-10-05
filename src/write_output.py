@@ -1,5 +1,4 @@
 import calendar
-from datetime import datetime as dt
 
 import numpy as np
 import pandas as pd
@@ -206,7 +205,10 @@ def format_winstverlies(wb, ws, winstverlies: pd.DataFrame, start_row: int):
                 ws.write(start_row + 1, i + 1, "", format_winstverlies_num)
 
 
-def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int, year: str, total_invested: float, total_waarde_full: list):
+def format_jaaroverzicht(
+        wb, ws, totals: pd.DataFrame, start_row: int, year: str, total_invested: float, total_waarde_full: list,
+        deposits: pd.DataFrame, benchmark: pd.DataFrame
+):
     """
     Format jaaroverzicht and write to sheet.
 
@@ -216,6 +218,10 @@ def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int, year: str
     :param start_row: Integer to start writing at.
     :param year: String with current year of writing.
     :param total_invested: Float number of total investments.
+    :param total_waarde_full: List with total waarde to pass to overview.
+    :param deposits: Dataframe with deposits made.
+    :param benchmark: Dataframe with benchmark pricing data.
+
     :return total_invested: Float updated number of total investments.
     """
 
@@ -248,25 +254,73 @@ def format_jaaroverzicht(wb, ws, totals: pd.DataFrame, start_row: int, year: str
             else:
                 ws.write(start_row + i + 1, j, totals_waarde.iloc[i, j])
 
-    add_jaaroverzicht_plot(ws, totals_waarde, start_row, year)
+    add_jaaroverzicht_plot(ws, totals_waarde, deposits, benchmark, start_row, year)
 
     total_waarde_full.append(totals_waarde)  # pass to overview over the years
 
     return total_invested, total_waarde_full
 
 
-def add_jaaroverzicht_plot(ws, totals_waarde: pd.DataFrame, start_row: int, year: str):
+def simulate_benchmark_values(totals_waarde: pd.DataFrame, deposits: pd.DataFrame, benchmark: pd.DataFrame):
+    """
+    Simulate value of benchmark file with the deposits and starting value that was made.
+
+    :param totals_waarde: List with total waarde to pass to overview.
+    :param deposits: Dataframe with deposits made.
+    :param benchmark: Dataframe with benchmark pricing data.
+
+    :return totals_waarde: Dataframe with total waarde.
+    """
+
+    deposits_period = deposits[
+        (deposits['Datum'] > min(totals_waarde['index'])) &
+        (deposits['Datum'] <= max(totals_waarde['index']))
+    ]
+    deposits_period = pd.concat([
+        deposits_period,
+        pd.DataFrame({
+                'Datum': [pd.to_datetime(totals_waarde['index'].iloc[0])],
+                'Storting': [totals_waarde['Portefeuille'].iloc[0]]
+        })
+    ]).reset_index(drop=True)
+    deposits_period = deposits_period.merge(benchmark, left_on='Datum', right_on='date').drop('date', axis=1)
+    deposits_period = deposits_period.sort_values('Datum').reset_index(drop=True)
+
+    for col in deposits_period:
+        if 'price_' in col:
+            name = col.replace('price_', '')
+            deposits_period[f"{name}"] = (deposits_period["Storting"] / deposits_period[col]).cumsum() * deposits_period[col]
+            deposits_period = deposits_period.drop(col, axis=1)
+
+    deposits_period['Datum'] = deposits_period['Datum'].astype(str)
+    totals_waarde = totals_waarde.merge(deposits_period, left_on='index', right_on='Datum', how='left')
+    totals_waarde = totals_waarde.drop(['Storting', 'Datum'], axis=1)
+    totals_waarde = totals_waarde.ffill().bfill()
+
+    return totals_waarde
+
+
+def add_jaaroverzicht_plot(
+        ws, totals_waarde: pd.DataFrame, deposits: pd.DataFrame, benchmark: pd.DataFrame, start_row: int, year: str
+):
     """
     Capture jaaroverzicht in image and write to Excel.
 
     :param ws: xlsxwriter Worksheet object.
     :param totals_waarde: Dataframe with totals info.
+
+    :param benchmark: Dataframe with benchmark pricing data.
     :param start_row: Integer to start writing at.
     :param year: String with current year of writing.
     """
 
+    totals_waarde = simulate_benchmark_values(totals_waarde, deposits, benchmark)
+
     plt.plot(totals_waarde['Portefeuille'], color=header_color, label='Portefeuille')
     plt.plot(totals_waarde['Inleg'], 'k', label='Inleg')
+    plt.plot(totals_waarde['SP500'], 'b', label='SP500')
+    plt.plot(totals_waarde['MSCI_World'], 'c', label='MSCI_World')
+    plt.plot(totals_waarde['AEX'], 'm', label='AEX')
     totals_waarde['Winst/Verlies'].plot(kind='bar', color=positive_color, label='Winst/Verlies')
 
     ax = plt.gca()
@@ -294,13 +348,18 @@ def add_jaaroverzicht_plot(ws, totals_waarde: pd.DataFrame, start_row: int, year
     plt.close()
 
 
-def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_dict: dict, wb, writer):
+def write_portefeuille(
+        portefeuille_dict: dict, totals_dict: dict, winstverlies_dict: dict, deposits: pd.DataFrame,
+        benchmark: pd.DataFrame, wb, writer
+):
     """
     Write portefeuille info to Excel.
 
     :param portefeuille_dict: Dict with portefeuille info.
     :param totals_dict: Dict with totals info.
     :param winstverlies_dict: Dict with winstverlies.
+    :param deposits: Dataframe with deposits made.
+    :param benchmark: Dataframe with benchmark pricing data.
     :param wb: xlsxwriter Workbook object.
     :param writer: xlsxwriter Writer object.
     :return writer: xlsxwriter Writer object.
@@ -332,7 +391,9 @@ def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_
         start_row += 4
 
         # format jaaroverzicht. keep the total invest amount to take to the next year total inleg
-        total_invested, totals_waarde_full = format_jaaroverzicht(wb, ws, totals, start_row, key, total_invested, totals_waarde_full)
+        total_invested, totals_waarde_full = format_jaaroverzicht(
+            wb, ws, totals, start_row, key, total_invested, totals_waarde_full, deposits, benchmark
+        )
         format_header(wb, ws, key)
         set_cell_widths(ws, len(portefeuille.columns))
         ws.freeze_panes(2, 1)
@@ -344,11 +405,9 @@ def write_portefeuille(portefeuille_dict: dict, totals_dict: dict, winstverlies_
 
 def plot_total_dividend(totals: pd.DataFrame):
     """
-    Create a stacked barplot with quartely dividends.
+    Create a stacked barplot with quarterly dividends.
 
-    :param writer: Exelwriter object.
-    :param wb: Excelwriter workbook.
-    :return overview of deposits over time.
+    :param totals: dataframe with dividends.
     """
 
     x = np.arange(0, len(totals))
@@ -448,13 +507,18 @@ def write_costs_overview(writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
     return writer
 
 
-def write_returns_overview(totals_dict: dict, totals_waarde_full: list, writer: pd.ExcelWriter, wb) -> pd.ExcelWriter:
+def write_returns_overview(
+        totals_dict: dict, totals_waarde_full: list, deposits: pd.DataFrame, benchmark: pd.DataFrame,
+        writer: pd.ExcelWriter, wb
+) -> pd.ExcelWriter:
     """
     Write yearly returns overview to separate sheet. This creates a table. The yearly return is calculated by
     calculating a weighted 'inleg' (perc of the year the money could generate) returns multiplied by the amount.
 
     :param totals_dict: dictionary with totals per year to calculate returns.
     :param totals_waarde_full: list with portfolio value over time.
+    :param deposits: Dataframe with deposits made.
+    :param benchmark: Dataframe with benchmark pricing data.
     :param writer: Exelwriter object.
     :param wb: Excelwriter workbook.
     :return overview of costs over time.
@@ -498,6 +562,6 @@ def write_returns_overview(totals_dict: dict, totals_waarde_full: list, writer: 
     ws.set_column(1, len(returns_overview.columns), 20)
 
     totals_waarde_full = pd.concat(totals_waarde_full).reset_index(drop=True)
-    add_jaaroverzicht_plot(ws, totals_waarde_full, start_row=len(returns_overview)+3, year='')
+    add_jaaroverzicht_plot(ws, totals_waarde_full, deposits, benchmark, start_row=len(returns_overview)+3, year='')
 
     return writer
